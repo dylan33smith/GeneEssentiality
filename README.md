@@ -1,7 +1,7 @@
 PROJECT PROTOCOL: DeepConditional (v2.0)
 Title: Context-Aware Prediction of Bacterial Gene Essentiality
 
-1. EXECUTIVE SUMMARY & DATA STRATEGY
+### 1. EXECUTIVE SUMMARY & DATA STRATEGY
 ------------------------------------
 Objective: Predict quantitative gene fitness (t-scores) based on protein sequence, genomic context (operon structure), and environmental conditions.
 
@@ -10,7 +10,7 @@ The database contains distinct "Ecosystem Silos" where media usage does not over
 - Risk: A model trained on all data may rely on "Media Shortcuts" (e.g., predicting phenotypes based solely on the media type rather than the stressor).
 - Strategy: The project is split into a "Connected MVP" (high-overlap data) and a "Universal V2" (full sparse data).
 
-2. PHASE I: THE "CONNECTED" MVP
+### 2. PHASE I: THE "CONNECTED" MVP
 -------------------------------
 Goal: Prove the "Genotype + Stress = Phenotype" hypothesis in a controlled data environment.
 
@@ -35,7 +35,7 @@ Instead of using all 48 organisms, the MVP will restrict training to the largest
   - Vector B (Stress): One-Hot encoding of the ~100 distinct chemical stressors in this subset.
   - Input = Concatenate(Vector A, Vector B).
 
-3. PHASE II: ARCHITECTURE & TRAINING
+### 3. PHASE II: ARCHITECTURE & TRAINING
 ------------------------------------
 Goal: A Transformer that fuses Genomic Context with Environmental Context.
 
@@ -61,7 +61,7 @@ Goal: A Transformer that fuses Genomic Context with Environmental Context.
 * Metric:
   - AUPRC (Area Under Precision-Recall Curve) for detecting essential genes.
 
-4. PHASE III: VALIDATION (THE "HONEST" SPLIT)
+### 4. PHASE III: VALIDATION (THE "HONEST" SPLIT)
 ---------------------------------------------
 Goal: Ensure the model isn't just memorizing homologous genes.
 
@@ -79,7 +79,7 @@ Goal: Ensure the model isn't just memorizing homologous genes.
   - Hold out "Pseudomonas putida" entirely.
   - Can the model predict its fitness using only E. coli/Klebsiella training data?
 
-5. PHASE IV: FUTURE DEVELOPMENT (V2 EXPANSION)
+### 5. PHASE IV: FUTURE DEVELOPMENT (V2 EXPANSION)
 ----------------------------------------------
 Goal: Expand to the full database and "Zero-Shot" chemical prediction.
 
@@ -94,7 +94,7 @@ Goal: Expand to the full database and "Zero-Shot" chemical prediction.
   - Replace One-Hot Stress vectors with Molecular Graph Embeddings (e.g., ChemBERTa or Mol2Vec).
   - Why: Enables "Zero-Shot" prediction. The model can predict toxicity for a *new* chemical if it is structurally similar to a known one.
 
-6. EXECUTION CHECKLIST (PRIORITIZED)
+### 6. EXECUTION CHECKLIST (PRIORITIZED)
 ------------------------------------
 
 STEP 1: Data Engineering (Week 1-2)
@@ -117,7 +117,7 @@ STEP 4: Analysis & V2 Planning (Week 6+)
 [V2] Scrape SMILES strings for all 350 conditions.
 [V2] Integrate Marine/Anaerobe data.
 
-7. RISK MANAGEMENT
+### 7. RISK MANAGEMENT
 ------------------
 * Risk: "Library Bias" (Small genes look essential because they get fewer hits).
   - Mitigation: Ensure 'gene_length' is a scalar input to the final MLP head.

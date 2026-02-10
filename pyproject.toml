@@ -1,0 +1,26 @@
+[project]
+name = "GeneEssentiality"
+version = "0.1.0"
+description = "Context-aware prediction of bacterial gene essentiality"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.0",
+    "pandas>=2.0",
+    "pyarrow>=14.0",
+    "biopython>=1.80",
+    "esm>=3.2.1",
+    "tqdm>=4.65",
+    "openpyxl>=3.1",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]

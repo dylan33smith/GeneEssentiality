@@ -1,0 +1,8 @@
+# GeneEssentiality project dependencies
+torch>=2.0
+pandas>=2.0
+pyarrow>=14.0
+biopython>=1.80
+esm>=3.2.1
+tqdm>=4.65
+openpyxl>=3.1
