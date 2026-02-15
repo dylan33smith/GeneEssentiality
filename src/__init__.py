@@ -22,6 +22,7 @@ from src.fitness import (
 )
 
 __all__ = [
+    # data_io
     "get_data_dir",
     "get_mvp_dir",
     "get_processed_dir",
@@ -31,6 +32,7 @@ __all__ = [
     "load_genes",
     "load_media_experiments",
     "load_organisms",
+    # fitness
     "ALWAYS_ESSENTIAL_FRAC",
     "CONDITIONAL_ESSENTIAL_FRAC_MAX",
     "CONDITIONAL_ESSENTIAL_FRAC_MIN",
@@ -38,4 +40,6 @@ __all__ = [
     "ESSENTIALITY_FIT_THRESHOLD",
     "aggregate_fitness_to_genes",
     "get_essentiality_class",
+    # pipeline (lazy import via src.pipeline)
+    "pipeline",
 ]

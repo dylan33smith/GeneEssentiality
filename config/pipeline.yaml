@@ -1,0 +1,31 @@
+# GeneEssentiality data pipeline configuration.
+#
+# All paths are relative to the project root unless absolute.
+# Override at runtime: python scripts/run_pipeline.py --config config/custom.yaml
+
+data:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  mvp_dir: data/mvp
+
+create_fastas:
+  subsets: [processed, mvp]
+
+embeddings:
+  proteomelm_model: "Bitbol-Lab/ProteomeLM-S"
+  device: "cuda:0"
+  input_subdir: organism_fastas
+  output_subdir: ProtLM_embedddings
+
+labels:
+  input_subdir: ProtLM_embedddings
+  output_subdir: ProtLM_embeddings_with_labels
+  class_to_int:
+    always_essential: 0
+    conditional: 1
+    non_essential: 2
+    no_data: -1
+
+mvp_filter:
+  media: [LB, RCH2_defined, M9]
+  min_cor12: 0.2
