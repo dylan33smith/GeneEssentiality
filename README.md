@@ -3,7 +3,7 @@ Title: Context-Aware Prediction of Bacterial Gene Essentiality
 
 ### 1. EXECUTIVE SUMMARY & DATA STRATEGY
 ------------------------------------
-Objective: Predict quantitative gene fitness (t-scores) based on protein sequence, genomic context (operon structure), and environmental conditions.
+Objective: Predict quantitative gene fitness (t-scores) based on protein sequence and environmental conditions.
 
 CRITICAL INSIGHT FROM DATA ANALYSIS:
 The database contains distinct "Ecosystem Silos" where media usage does not overlap (e.g., Marine Broth is never used for E. coli). 
@@ -22,14 +22,7 @@ Instead of using all 48 organisms, the MVP will restrict training to the largest
 * Justification:
   - These organisms share media types, forcing the model to look at the GENE differences to explain fitness, not just the media differences.
 
-2.2 The "Sliding Window" Input (The Operon Fix)
-* Problem: Tn-Seq data is noisy due to "Polar Effects" (an upstream hit breaks a downstream gene).
-* MVP Implementation:
-  - Input: A sequence of 11 genes (Target +/- 5 neighbors).
-  - Feature: Sort genes by 'scaffold' and 'begin' index.
-  - Why: This allows the Transformer to "see" the operon. If the upstream gene is essential, the model can learn to lower the fitness prediction for the downstream gene automatically.
-
-2.3 Condition Representation (MVP Level)
+2.2 Condition Representation (MVP Level)
 * Feature: Hierarchical Multi-Hot Encoding.
   - Vector A (Media): One-Hot encoding of the 15-20 relevant media types (LB, RCH2, etc.).
   - Vector B (Stress): One-Hot encoding of the ~100 distinct chemical stressors in this subset.
@@ -37,16 +30,16 @@ Instead of using all 48 organisms, the MVP will restrict training to the largest
 
 ### 3. PHASE II: ARCHITECTURE & TRAINING
 ------------------------------------
-Goal: A Transformer that fuses Genomic Context with Environmental Context.
+Goal: A Transformer that fuses gene (protein) representation with environmental context.
 
 3.1 The Model: "Context-Aware Transformer"
-* Input Dimensions: (Batch_Size, Sequence_Length=12, Embedding_Dim=1280)
+* Input Dimensions: (Batch_Size, Sequence_Length=2, Embedding_Dim=1280)
 * Token Structure:
   - Token 0: [Condition_Embedding] (The "Query" Context)
-  - Tokens 1-11: [Gene_Window_Embeddings] (The "Key/Value" Biology)
+  - Token 1: [Gene_Embedding] (The target gene's protein embedding)
 * Mechanism:
-  - The Self-Attention layers allow Token 0 (Condition) to "activate" specific genes in the window.
-  - Example: If Condition="Antibiotic X", the model attends to the "Efflux Pump" gene in the window.
+  - The Self-Attention layers allow Token 0 (Condition) to attend to the gene embedding.
+  - Example: If Condition="Antibiotic X", the model learns condition-specific fitness from the gene's sequence representation.
 
 3.2 Representation (Pre-Computed)
 * Protein Encoder: ESM-2 (esm2_t33_650M_UR50D).
@@ -99,8 +92,7 @@ Goal: Expand to the full database and "Zero-Shot" chemical prediction.
 
 STEP 1: Data Engineering (Week 1-2)
 [MVP] Write SQL to extract the "Terrestrial Subset" (Organisms using LB/RCH2).
-[MVP] Implement Sliding Window logic (Target +/- 5 genes).
-[MVP] Generate ESM-2 embeddings for this subset.
+[MVP] Generate ESM-2 (or ProteomeLM) embeddings for this subset.
 [MVP] Create "Cluster Splits" (50% identity).
 
 STEP 2: Baseline Modeling (Week 3)

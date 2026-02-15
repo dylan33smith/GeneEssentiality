@@ -30,7 +30,7 @@ Purpose of each file or directory in the project (code and key docs). Data asset
 
 | File | Purpose |
 |------|---------|
-| scripts/generate_esmc_embeddings.py | Standalone ESM-C embedding generator: reads FASTA, runs ESM-C (e.g. esmc_300m), writes ProteomeLM-format .pt. Uses `esm` only; does not import ProteomeLM or `src`. |
+| scripts/generate_proteomelm_embeddings.py | ProteomeLM embedding generator: reads a single-organism FASTA (--input), uses ProteomeLM package (ESM-C 600M + ProteomeLM transformer), writes .pt with `embeddings` and `group_labels` (orgId:locusId) for joining to genes. Run per organism; combine outputs for full MVP. |
 
 ---
 

@@ -1,1 +1,36 @@
-Look through all of the files in the @notes/ folder. Verify all of the current information. refine and format the information so that it is more concise and easily readable. Feel free to create new files or remove existing ones in whatever way makes the most sense. The end result should be a full syntheiss of what has been done where someone could read these files and fully understand the current scope and structure of the project. 
+Role: Act as a Lead Data Scientist and Technical Writer.
+Deliverable: A single deep-dive document: notes/05_DATA_ANALYSIS.md.
+Goal: A reader with no prior context can read this file and clearly understand the data lifecycle of this project: what the data is, where it comes from, how it is filtered and transformed, and what is (or will be) used as model inputs. The focus is on accurate, evidence-based understanding of the data—no invented numbers or stages.
+Phase 1: Discovery (mandatory)
+Use the repo as source of truth. Do not assume file types or schemas; discover them.
+Load data via the project’s own API where possible: use src.data_io (load_genes, load_experiments, load_fitness, load_organisms, load_media_experiments) with subset="processed" and subset="mvp". For embeddings and sequences, use the paths and formats documented in notes/02_DATA_DICTIONARY.md (e.g. data/mvp/embeddings/protein_embeddings.pt, FASTA if present).
+Write and run a small Python script (or notebook) that:
+Loads the actual files at each stage (Parquet tables, and optionally FASTA, .pt).
+Computes real metrics: row counts, column dtypes, null counts, value ranges (min/max/mean) for key numeric columns (e.g. fit, t, cor12, frac_essential_confident, n_confident_experiments).
+For gene-level data: essentiality class counts and percentages (all four classes: always_essential, conditional, non_essential, no_data).
+For experiments: counts by media, by condition_1 (or top categories), and distribution of cor12.
+Do not guess. If a file or stage is missing, say so. If embeddings exist but are not yet wired to labels in code, state that.
+Phase 2: Documentation — write notes/05_DATA_ANALYSIS.md
+Use the structure below. For Stage I and Stage II, use the same section template (Description, Schema, Statistics, Snapshot) so readers can compare. Be purely factual: if the data is messy or unbalanced, document it as such.
+1. Executive summary
+One short paragraph: what the data represents (genes, experiments, fitness, organisms; optionally sequences and embeddings) and the classification goal (four-way essentiality class from the 80%/10% rule; optionally future fitness prediction). Mention that the pipeline is context-aware (genotype + condition → outcome).
+2. Stage I: Processed data (full database)
+Description: What these files are and where they come from (e.g. Fitness Browser–derived Parquet in data/processed/: genes, experiments, fitness, organisms). Note that “raw” upstream (e.g. Fitness Browser export) is outside the repo; this stage is the first version available in the project.
+Schema: Table with columns: Column name | Type | Description for each Parquet table (genes, experiments, fitness, organisms). Align names and semantics with src/data_io.py and notes/02_DATA_DICTIONARY.md.
+Statistics: Row counts, unique genes, unique experiments, fitness record count; value ranges for fit, t; distribution of cor12 (e.g. % above 0.2). Use numbers from your discovery script.
+Snapshot: Markdown table of the first 3 rows (or a representative sample) for each main table, or one combined snapshot that illustrates the link between genes, experiments, and fitness.
+3. Stage II: MVP data (quality-filtered subset)
+Description: Same schema as Stage I but restricted to the MVP subset (data/mvp/): e.g. terrestrial organisms, shared media (LB, RCH2_defined, M9), and experiments with cor12 >= 0.2.
+Transformation logic (the “why”): Explain why the MVP subset exists: quality (cor12), comparability (shared media), and organism count. Reference the filtering criteria (e.g. from README or notes/01_PROJECT_OVERVIEW.md). If duplicates or missing values were handled in the pipeline that produced these Parquet files, describe how (or state that transformation is done upstream).
+Schema: Same table format as Stage I. Note any columns that exist only in one stage, if any.
+Statistics: Same kind of metrics as Stage I; explicitly note the drop in row counts (genes, experiments, fitness records) and any change in value ranges or distributions.
+Snapshot: Same format as Stage I (first 3 or representative rows).
+4. Stage III: Model-ready data (labels and optional embeddings)
+Transformation logic (the “why”): Explain how gene-level labels are produced: confident experiments (|t| ≥ 2), essential-in-experiment (fit &lt; −1), then the 80%/10% rule (frac_essential_confident and n_confident) yielding the four essentiality classes. Reference src/fitness.py (e.g. get_essentiality_class, aggregate_fitness_to_genes). If embeddings are used: describe their format (e.g. ProteomeLM-style .pt: inputs_embeds, group_embeds, group_labels) and how they are (or would be) aligned to genes/labels (e.g. by group_labels or FASTA order). If embeddings are not yet integrated into the pipeline, state that clearly.
+Structure: Describe the final shapes and types: e.g. gene-level table with essentiality_class; if applicable, tensor shapes (e.g. embeddings [N, D], label vector or one-hot). Use actual shapes from your discovery script; if something is “intended but not yet built,” say so.
+Class balance: Present the percentage (and counts) for each of the four classes: always_essential, conditional, non_essential, no_data. This is critical for understanding imbalance and metric choice (e.g. AUPRC).
+Constraint: Factual only. No invented metrics or stages. If the model input pipeline is only partial (e.g. labels exist but embeddings are not yet joined), document the current state and the intended end state briefly.
+Conventions
+Use project terminology: essentiality_class, frac_essential_confident, n_confident, cor12, subset="processed" vs "mvp", and the four class names.
+Prefer Parquet and the src loaders; only mention CSV/Excel where they actually exist (e.g. media Excel).
+Keep Stage I vs II vs III aligned with what exists in the repo: Processed → MVP → model-ready (gene-level stats + labels ± embeddings).

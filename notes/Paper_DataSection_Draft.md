@@ -32,7 +32,7 @@ Replicate reproducibility in the Fitness Browser is summarized by **cor12**, the
 
 ## Gene-level data and essentiality classification
 
-The **gene table** (genes.parquet) provides one row per gene with identifiers (orgId, locusId, sysName), genomic position (scaffoldId, begin, end, strand), and derived features: **gene_length** (end − begin + 1), **GC** content (0–1), and **type** (we retain only type = 1, protein-coding). Optional fields include gene name, description, and counts/summaries of fitness records (see below). **Genomic order** for constructing local context (e.g., sliding windows) is defined by sorting genes by (orgId, scaffoldId, begin).
+The **gene table** (genes.parquet) provides one row per gene with identifiers (orgId, locusId, sysName), genomic position (scaffoldId, begin, end, strand), and derived features: **gene_length** (end − begin + 1), **GC** content (0–1), and **type** (we retain only type = 1, protein-coding). Optional fields include gene name, description, and counts/summaries of fitness records (see below). **Genomic position** (scaffoldId, begin, end) is available for each gene; genomic order is defined by sorting genes by (orgId, scaffoldId, begin).
 
 For each gene, we compute summary statistics over its fitness records across experiments. These include: **n_total_experiments** (number of experiment-level fitness values), **n_confident_experiments** (number of records with |t| ≥ 2), **frac_not_confident** (fraction of records with |t| &lt; 2), **mean_fit_confident** (mean fitness over confident records only), **frac_essential_all** (fraction of all records with fit &lt; −1), and **frac_essential_confident** (fraction of confident records with fit &lt; −1). Using the confident measurements only, we assign an **essentiality_class** to each gene:
 
@@ -77,12 +77,6 @@ Protein sequences are stored in FASTA format with headers `>orgId:locusId`. The 
 
 ---
 
-## Genomic context: sliding window (operon / neighborhood)
-
-Tn-Seq fitness can be biased by **polar effects**: an insertion in an upstream gene can disrupt expression of downstream genes in the same operon, so that the downstream gene appears essential (or depleted) even when it is not. To allow the model to account for local context, we represent each **target gene** by a **sliding window** of 11 genes: the target plus five neighbors upstream and five downstream in genomic order. Order is defined by (orgId, scaffoldId, begin). At scaffold or chromosome boundaries we pad or truncate so that every target still has a fixed-length window (e.g., 11 positions, with padding tokens or repeated boundary genes as needed). The model receives a sequence of 11 (or 12 including a condition token) embeddings, so that attention can couple the condition to the relevant genes in the window (e.g., stress condition attending to an efflux-pump gene in the neighborhood).
-
----
-
 ## Train/validation/test split and homology control
 
 To evaluate **generalization** rather than memorization of similar sequences, we use a **homology-based split**. Proteins are clustered by sequence similarity (e.g., 50% identity using MMseqs2 or the existing ortholog table). Clusters are assigned to train, validation, and test (e.g., 70% / 15% / 15%) such that **no protein in the test set has &gt;50% sequence identity to any protein in the training set**. Thus, test performance reflects ability to predict fitness for genes that are not closely related to training genes. The ortholog table (2,838,750 pairs in the full processed set) is used to build or validate these clusters; for the MVP we restrict to ortholog pairs within the 27 MVP organisms when constructing the split. We also plan **generalization benchmarks**: (A) hold out all experiments for a specific condition (e.g., Sodium nitrite) to test chemical generalization; (B) hold out one organism entirely (e.g., Pseudomonas putida) to test organism generalization. Care is taken that no (gene, experiment) fitness value appears in more than one of train/val/test (no leakage across splits).
@@ -119,7 +113,7 @@ For the MVP, conditions are encoded as **discrete labels**, not as continuous ch
 - **MVP scope:** Results apply to the terrestrial/connected subset only; marine, methanogen, and other silos are not represented.
 - **Condition encoding:** Conditions are categorical; concentration and molecular structure are not used in the MVP.
 - **Fitness quality:** Even with cor12 ≥ 0.2, many fitness values have |t| &lt; 2; the zero-inflated distribution may affect learning and metrics.
-- **Polar effects:** The sliding window mitigates but does not eliminate operon-induced confounding.
+- **Polar effects:** Operon-induced confounding may affect fitness estimates; we do not explicitly model this in the MVP.
 - **Library bias:** Short genes and other technical biases are partially addressed by including gene_length (and optionally read-based features) in the model.
 
 ---

@@ -104,17 +104,16 @@ Sizes are from the current file on disk.
 
 Path: `data/media_composition.xlsx`. **Sheet index 2** (third sheet) is loaded by `load_media_experiments()`. Contains media/experiment composition metadata; column semantics are defined by the Excel source.
 
-### Embeddings (protein_embeddings.pt)
+### Embeddings (ProteomeLM .pt files)
 
-Path: `data/mvp/embeddings/protein_embeddings.pt`. Produced by `scripts/generate_esmc_embeddings.py` (FASTA → ESM-C → .pt). **Not loaded by `src`**; script exists but embeddings are not yet integrated into the pipeline.
+Produced by `scripts/generate_proteomelm_embeddings.py` from a single-organism FASTA (e.g. `data/mvp/organism_fastas/Keio.fasta`). One .pt per organism; combine or load separately for full MVP. **Not loaded by `src`**; embeddings are not yet integrated into the pipeline.
 
-**Format (ProteomeLM-style):**
+**Format (per-organism .pt):**
 
-- `inputs_embeds`: `torch.Tensor` of shape `(N, D)` — sequence embeddings.
-- `group_embeds`: `torch.Tensor` of shape `(N, D)` — group (e.g. protein) embeddings.
-- `group_labels`: `list` of length N — labels (e.g. locus IDs or FASTA IDs) in the same order as the FASTA.
+- `embeddings`: `torch.Tensor` of shape `(N, D)` — ProteomeLM contextualized embedding per gene (output of ProteomeLM transformer; D is model-dependent, e.g. 1152 for default ProteomeLM-S logits).
+- `group_labels`: `list` of length N — gene identifiers in format `orgId:locusId` (same order as rows in `embeddings`), for joining to `genes.parquet` (e.g. match to `orgId` + `locusId` or a composite key).
 
-**Shapes:** N = number of sequences in the input FASTA; D = embedding dimension (e.g. 960 for `esmc_300m`, model-dependent).
+**Pipeline:** FASTA (headers `>orgId:locusId`) → ESM-C 600M (via ProteomeLM package) → ProteomeLM transformer → save `embeddings` + `group_labels`. Run from repo root with ProteomeLM on PYTHONPATH.
 
 ---
 

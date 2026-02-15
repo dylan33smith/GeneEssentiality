@@ -1,0 +1,1212 @@
+{
+  "processed": {
+    "subset": "processed",
+    "row_counts": {
+      "genes": 221005,
+      "experiments": 7552,
+      "fitness": 27410721,
+      "organisms": 48
+    },
+    "unique_genes_in_fitness": 182447,
+    "unique_experiments_in_fitness": 7552,
+    "schema": {
+      "genes": [
+        {
+          "column": "orgId",
+          "dtype": "object"
+        },
+        {
+          "column": "locusId",
+          "dtype": "object"
+        },
+        {
+          "column": "sysName",
+          "dtype": "object"
+        },
+        {
+          "column": "scaffoldId",
+          "dtype": "object"
+        },
+        {
+          "column": "begin",
+          "dtype": "int64"
+        },
+        {
+          "column": "end",
+          "dtype": "int64"
+        },
+        {
+          "column": "gene_length",
+          "dtype": "int64"
+        },
+        {
+          "column": "type",
+          "dtype": "int64"
+        },
+        {
+          "column": "strand",
+          "dtype": "object"
+        },
+        {
+          "column": "gene",
+          "dtype": "object"
+        },
+        {
+          "column": "desc",
+          "dtype": "object"
+        },
+        {
+          "column": "GC",
+          "dtype": "float64"
+        },
+        {
+          "column": "n_total_experiments",
+          "dtype": "int64"
+        },
+        {
+          "column": "n_confident_experiments",
+          "dtype": "int64"
+        },
+        {
+          "column": "frac_not_confident",
+          "dtype": "float64"
+        },
+        {
+          "column": "mean_fit_confident",
+          "dtype": "float64"
+        },
+        {
+          "column": "frac_essential_all",
+          "dtype": "float64"
+        },
+        {
+          "column": "frac_essential_confident",
+          "dtype": "float64"
+        },
+        {
+          "column": "essentiality_class",
+          "dtype": "object"
+        }
+      ],
+      "experiments": [
+        {
+          "column": "orgId",
+          "dtype": "object"
+        },
+        {
+          "column": "expName",
+          "dtype": "object"
+        },
+        {
+          "column": "expDesc",
+          "dtype": "object"
+        },
+        {
+          "column": "expGroup",
+          "dtype": "object"
+        },
+        {
+          "column": "mutantLibrary",
+          "dtype": "object"
+        },
+        {
+          "column": "media",
+          "dtype": "object"
+        },
+        {
+          "column": "mediaStrength",
+          "dtype": "float64"
+        },
+        {
+          "column": "condition_1",
+          "dtype": "object"
+        },
+        {
+          "column": "concentration_1",
+          "dtype": "object"
+        },
+        {
+          "column": "units_1",
+          "dtype": "object"
+        },
+        {
+          "column": "condition_2",
+          "dtype": "object"
+        },
+        {
+          "column": "concentration_2",
+          "dtype": "object"
+        },
+        {
+          "column": "units_2",
+          "dtype": "object"
+        },
+        {
+          "column": "condition_3",
+          "dtype": "object"
+        },
+        {
+          "column": "concentration_3",
+          "dtype": "object"
+        },
+        {
+          "column": "units_3",
+          "dtype": "object"
+        },
+        {
+          "column": "temperature",
+          "dtype": "object"
+        },
+        {
+          "column": "pH",
+          "dtype": "object"
+        },
+        {
+          "column": "aerobic",
+          "dtype": "object"
+        },
+        {
+          "column": "vessel",
+          "dtype": "object"
+        },
+        {
+          "column": "liquid",
+          "dtype": "object"
+        },
+        {
+          "column": "shaking",
+          "dtype": "object"
+        },
+        {
+          "column": "cor12",
+          "dtype": "float64"
+        },
+        {
+          "column": "maxFit",
+          "dtype": "float64"
+        },
+        {
+          "column": "nGenerations",
+          "dtype": "float64"
+        }
+      ],
+      "fitness": [
+        {
+          "column": "orgId",
+          "dtype": "object"
+        },
+        {
+          "column": "locusId",
+          "dtype": "object"
+        },
+        {
+          "column": "expName",
+          "dtype": "object"
+        },
+        {
+          "column": "fit",
+          "dtype": "float64"
+        },
+        {
+          "column": "t",
+          "dtype": "float64"
+        }
+      ],
+      "organisms": [
+        {
+          "column": "orgId",
+          "dtype": "object"
+        },
+        {
+          "column": "division",
+          "dtype": "object"
+        },
+        {
+          "column": "genus",
+          "dtype": "object"
+        },
+        {
+          "column": "species",
+          "dtype": "object"
+        },
+        {
+          "column": "strain",
+          "dtype": "object"
+        },
+        {
+          "column": "taxonomyId",
+          "dtype": "int64"
+        }
+      ]
+    },
+    "null_counts": {
+      "genes": {
+        "orgId": 0,
+        "locusId": 0,
+        "sysName": 0,
+        "scaffoldId": 0,
+        "begin": 0,
+        "end": 0,
+        "gene_length": 0,
+        "type": 0,
+        "strand": 0,
+        "gene": 0,
+        "desc": 0,
+        "GC": 0,
+        "n_total_experiments": 0,
+        "n_confident_experiments": 0,
+        "frac_not_confident": 41059,
+        "mean_fit_confident": 43053,
+        "frac_essential_all": 41059,
+        "frac_essential_confident": 43053,
+        "essentiality_class": 0
+      },
+      "experiments": {
+        "orgId": 0,
+        "expName": 0,
+        "expDesc": 0,
+        "expGroup": 0,
+        "mutantLibrary": 0,
+        "media": 0,
+        "mediaStrength": 0,
+        "condition_1": 0,
+        "concentration_1": 0,
+        "units_1": 0,
+        "condition_2": 0,
+        "concentration_2": 0,
+        "units_2": 0,
+        "condition_3": 0,
+        "concentration_3": 0,
+        "units_3": 0,
+        "temperature": 0,
+        "pH": 0,
+        "aerobic": 0,
+        "vessel": 0,
+        "liquid": 0,
+        "shaking": 0,
+        "cor12": 0,
+        "maxFit": 0,
+        "nGenerations": 5107
+      },
+      "fitness": {
+        "orgId": 0,
+        "locusId": 0,
+        "expName": 0,
+        "fit": 0,
+        "t": 0
+      },
+      "organisms": {
+        "orgId": 0,
+        "division": 0,
+        "genus": 0,
+        "species": 0,
+        "strain": 0,
+        "taxonomyId": 0
+      }
+    },
+    "fitness_fit": {
+      "min": -12.2537541499906,
+      "max": 17.9538341194148,
+      "mean": -0.0966628109574845,
+      "count": 27410721
+    },
+    "fitness_t": {
+      "min": -43.3259119225742,
+      "max": 113.479040508512,
+      "mean": -0.17844123639512402,
+      "count": 27410721
+    },
+    "experiments_cor12": {
+      "min": 0.100005213731797,
+      "max": 0.788485617760728,
+      "mean": 0.27962816326612894,
+      "count": 7552
+    },
+    "experiments_cor12_pct_ge_0_2": 62.023305084745765,
+    "genes_frac_essential_confident": {
+      "min": 0.0,
+      "max": 1.0,
+      "mean": 0.06738190220988263,
+      "count": 177952
+    },
+    "genes_n_confident_experiments": {
+      "min": 0.0,
+      "max": 713.0,
+      "mean": 43.21979593221873,
+      "count": 221005
+    },
+    "essentiality_class_counts": {
+      "non_essential": 148546,
+      "no_data": 43053,
+      "conditional": 27102,
+      "always_essential": 2304
+    },
+    "essentiality_class_pct": {
+      "always_essential": 1.04251035044456,
+      "conditional": 12.263070971244995,
+      "non_essential": 67.21386393972988,
+      "no_data": 19.480554738580576
+    },
+    "experiments_by_media": {
+      "LB": 1326,
+      "RCH2_defined_noCarbon": 1008,
+      "marine_broth_2216": 724,
+      "MoYLS4": 325,
+      "RCH2_defined_Glucose_noNitrogen": 320,
+      "R2A": 260,
+      "Varel_Bryant_medium_Glucose": 239,
+      "MoLS4": 225,
+      "DinoMM_noCarbon_HighNutrient": 206,
+      "ShewMM_noCarbon": 160,
+      "BHIS": 129,
+      "RCH2_defined_noNitrogen": 127,
+      "BG11": 116,
+      "Varel_Bryant_medium": 112,
+      "Dv_base_medium": 111,
+      "PYE": 110,
+      "MoLS4_no_ammonium": 110,
+      "MOPS minimal media_noCarbon": 110,
+      "MOPS minimal media_Glucose_noNitrogen": 104,
+      "Mc_defined_H2": 86
+    },
+    "experiments_by_condition_1_top10": {
+      "": 949,
+      "Sodium acetate": 135,
+      "D-Glucose": 119,
+      "Sodium pyruvate": 115,
+      "Sodium nitrite": 113,
+      "Dimethyl Sulfoxide": 112,
+      "casamino acids": 103,
+      "Cobalt chloride hexahydrate": 95,
+      "Sodium D,L-Lactate": 95,
+      "Sodium nitrate": 90
+    },
+    "snapshot_genes": [
+      {
+        "orgId": "ANA3",
+        "locusId": "7022496",
+        "sysName": "Shewana3_4141",
+        "scaffoldId": "248373",
+        "begin": 1030,
+        "end": 1248,
+        "gene_length": 219,
+        "type": 1,
+        "strand": "+",
+        "gene": "",
+        "desc": "putative transposase (RefSeq)",
+        "GC": 0.4429,
+        "n_total_experiments": 107,
+        "n_confident_experiments": 11,
+        "frac_not_confident": 0.897196261682243,
+        "mean_fit_confident": 0.20219046414655784,
+        "frac_essential_all": 0.0,
+        "frac_essential_confident": 0.0,
+        "essentiality_class": "non_essential"
+      },
+      {
+        "orgId": "ANA3",
+        "locusId": "7022497",
+        "sysName": "Shewana3_4142",
+        "scaffoldId": "248373",
+        "begin": 1491,
+        "end": 2471,
+        "gene_length": 981,
+        "type": 1,
+        "strand": "-",
+        "gene": "",
+        "desc": "IS4 family transposase (RefSeq)",
+        "GC": 0.476,
+        "n_total_experiments": 107,
+        "n_confident_experiments": 14,
+        "frac_not_confident": 0.8691588785046729,
+        "mean_fit_confident": -0.09183309729258114,
+        "frac_essential_all": 0.0,
+        "frac_essential_confident": 0.0,
+        "essentiality_class": "non_essential"
+      },
+      {
+        "orgId": "ANA3",
+        "locusId": "7022498",
+        "sysName": "Shewana3_4143",
+        "scaffoldId": "248373",
+        "begin": 2555,
+        "end": 2836,
+        "gene_length": 282,
+        "type": 1,
+        "strand": "-",
+        "gene": "",
+        "desc": "hypothetical protein (RefSeq)",
+        "GC": 0.4504,
+        "n_total_experiments": 0,
+        "n_confident_experiments": 0,
+        "frac_not_confident": NaN,
+        "mean_fit_confident": NaN,
+        "frac_essential_all": NaN,
+        "frac_essential_confident": NaN,
+        "essentiality_class": "no_data"
+      }
+    ],
+    "snapshot_experiments": [
+      {
+        "orgId": "ANA3",
+        "expName": "set1H1",
+        "expDesc": "L-Asparagine (N)",
+        "expGroup": "nitrogen source",
+        "mutantLibrary": "ANA3_ML1",
+        "media": "ShewMM_noNitrogen",
+        "mediaStrength": 1.0,
+        "condition_1": "L-Asparagine",
+        "concentration_1": "20",
+        "units_1": "mM",
+        "condition_2": "",
+        "concentration_2": "",
+        "units_2": "",
+        "condition_3": "",
+        "concentration_3": "",
+        "units_3": "",
+        "temperature": "30",
+        "pH": "7",
+        "aerobic": "Aerobic",
+        "vessel": "tube",
+        "liquid": "Liquid",
+        "shaking": "200 rpm",
+        "cor12": 0.325697686517539,
+        "maxFit": 4.24116516344664,
+        "nGenerations": 4.90689059560852
+      },
+      {
+        "orgId": "ANA3",
+        "expName": "set1H10",
+        "expDesc": "L-Arginine (N)",
+        "expGroup": "nitrogen source",
+        "mutantLibrary": "ANA3_ML1",
+        "media": "ShewMM_noNitrogen",
+        "mediaStrength": 1.0,
+        "condition_1": "L-Arginine",
+        "concentration_1": "10",
+        "units_1": "mM",
+        "condition_2": "",
+        "concentration_2": "",
+        "units_2": "",
+        "condition_3": "",
+        "concentration_3": "",
+        "units_3": "",
+        "temperature": "30",
+        "pH": "7",
+        "aerobic": "Aerobic",
+        "vessel": "tube",
+        "liquid": "Liquid",
+        "shaking": "200 rpm",
+        "cor12": 0.336923900956289,
+        "maxFit": 2.91355323247323,
+        "nGenerations": 4.25550073314839
+      },
+      {
+        "orgId": "ANA3",
+        "expName": "set1H13",
+        "expDesc": "L-Alanine (C)",
+        "expGroup": "carbon source",
+        "mutantLibrary": "ANA3_ML1",
+        "media": "ShewMM_noCarbon",
+        "mediaStrength": 1.0,
+        "condition_1": "L-Alanine",
+        "concentration_1": "20",
+        "units_1": "mM",
+        "condition_2": "",
+        "concentration_2": "",
+        "units_2": "",
+        "condition_3": "",
+        "concentration_3": "",
+        "units_3": "",
+        "temperature": "30",
+        "pH": "7",
+        "aerobic": "Aerobic",
+        "vessel": "tube",
+        "liquid": "Liquid",
+        "shaking": "200 rpm",
+        "cor12": 0.369109465159085,
+        "maxFit": 5.53561493134807,
+        "nGenerations": NaN
+      }
+    ],
+    "snapshot_fitness": [
+      {
+        "orgId": "ANA3",
+        "locusId": "7022496",
+        "expName": "set1H1",
+        "fit": -0.251814035822457,
+        "t": -0.398131349639348
+      },
+      {
+        "orgId": "ANA3",
+        "locusId": "7022496",
+        "expName": "set1H10",
+        "fit": -0.109678480178647,
+        "t": -0.198420914361242
+      },
+      {
+        "orgId": "ANA3",
+        "locusId": "7022496",
+        "expName": "set1H13",
+        "fit": 0.275650297935021,
+        "t": 0.582536779267018
+      }
+    ],
+    "snapshot_organisms": [
+      {
+        "orgId": "ANA3",
+        "division": "Gammaproteobacteria",
+        "genus": "Shewanella",
+        "species": "sp.",
+        "strain": "ANA-3",
+        "taxonomyId": 94122
+      },
+      {
+        "orgId": "BFirm",
+        "division": "Betaproteobacteria",
+        "genus": "Burkholderia",
+        "species": "phytofirmans",
+        "strain": "PsJN",
+        "taxonomyId": 398527
+      },
+      {
+        "orgId": "Btheta",
+        "division": "Bacteroidetes",
+        "genus": "Bacteroides",
+        "species": "thetaiotaomicron",
+        "strain": "VPI-5482",
+        "taxonomyId": 226186
+      }
+    ]
+  },
+  "mvp": {
+    "subset": "mvp",
+    "row_counts": {
+      "genes": 138518,
+      "experiments": 2164,
+      "fitness": 8688562,
+      "organisms": 27
+    },
+    "unique_genes_in_fitness": 115743,
+    "unique_experiments_in_fitness": 2164,
+    "schema": {
+      "genes": [
+        {
+          "column": "orgId",
+          "dtype": "object"
+        },
+        {
+          "column": "locusId",
+          "dtype": "object"
+        },
+        {
+          "column": "sysName",
+          "dtype": "object"
+        },
+        {
+          "column": "scaffoldId",
+          "dtype": "object"
+        },
+        {
+          "column": "begin",
+          "dtype": "int64"
+        },
+        {
+          "column": "end",
+          "dtype": "int64"
+        },
+        {
+          "column": "gene_length",
+          "dtype": "int64"
+        },
+        {
+          "column": "type",
+          "dtype": "int64"
+        },
+        {
+          "column": "strand",
+          "dtype": "object"
+        },
+        {
+          "column": "gene",
+          "dtype": "object"
+        },
+        {
+          "column": "desc",
+          "dtype": "object"
+        },
+        {
+          "column": "GC",
+          "dtype": "float64"
+        },
+        {
+          "column": "n_total_experiments",
+          "dtype": "int64"
+        },
+        {
+          "column": "n_confident_experiments",
+          "dtype": "int64"
+        },
+        {
+          "column": "frac_not_confident",
+          "dtype": "float64"
+        },
+        {
+          "column": "mean_fit_confident",
+          "dtype": "float64"
+        },
+        {
+          "column": "frac_essential_all",
+          "dtype": "float64"
+        },
+        {
+          "column": "frac_essential_confident",
+          "dtype": "float64"
+        },
+        {
+          "column": "essentiality_class",
+          "dtype": "object"
+        }
+      ],
+      "experiments": [
+        {
+          "column": "orgId",
+          "dtype": "object"
+        },
+        {
+          "column": "expName",
+          "dtype": "object"
+        },
+        {
+          "column": "expDesc",
+          "dtype": "object"
+        },
+        {
+          "column": "expGroup",
+          "dtype": "object"
+        },
+        {
+          "column": "mutantLibrary",
+          "dtype": "object"
+        },
+        {
+          "column": "media",
+          "dtype": "object"
+        },
+        {
+          "column": "mediaStrength",
+          "dtype": "float64"
+        },
+        {
+          "column": "condition_1",
+          "dtype": "object"
+        },
+        {
+          "column": "concentration_1",
+          "dtype": "object"
+        },
+        {
+          "column": "units_1",
+          "dtype": "object"
+        },
+        {
+          "column": "condition_2",
+          "dtype": "object"
+        },
+        {
+          "column": "concentration_2",
+          "dtype": "object"
+        },
+        {
+          "column": "units_2",
+          "dtype": "object"
+        },
+        {
+          "column": "condition_3",
+          "dtype": "object"
+        },
+        {
+          "column": "concentration_3",
+          "dtype": "object"
+        },
+        {
+          "column": "units_3",
+          "dtype": "object"
+        },
+        {
+          "column": "temperature",
+          "dtype": "object"
+        },
+        {
+          "column": "pH",
+          "dtype": "object"
+        },
+        {
+          "column": "aerobic",
+          "dtype": "object"
+        },
+        {
+          "column": "vessel",
+          "dtype": "object"
+        },
+        {
+          "column": "liquid",
+          "dtype": "object"
+        },
+        {
+          "column": "shaking",
+          "dtype": "object"
+        },
+        {
+          "column": "cor12",
+          "dtype": "float64"
+        },
+        {
+          "column": "maxFit",
+          "dtype": "float64"
+        },
+        {
+          "column": "nGenerations",
+          "dtype": "float64"
+        }
+      ],
+      "fitness": [
+        {
+          "column": "orgId",
+          "dtype": "object"
+        },
+        {
+          "column": "locusId",
+          "dtype": "object"
+        },
+        {
+          "column": "expName",
+          "dtype": "object"
+        },
+        {
+          "column": "fit",
+          "dtype": "float64"
+        },
+        {
+          "column": "t",
+          "dtype": "float64"
+        }
+      ],
+      "organisms": [
+        {
+          "column": "orgId",
+          "dtype": "object"
+        },
+        {
+          "column": "division",
+          "dtype": "object"
+        },
+        {
+          "column": "genus",
+          "dtype": "object"
+        },
+        {
+          "column": "species",
+          "dtype": "object"
+        },
+        {
+          "column": "strain",
+          "dtype": "object"
+        },
+        {
+          "column": "taxonomyId",
+          "dtype": "int64"
+        }
+      ]
+    },
+    "null_counts": {
+      "genes": {
+        "orgId": 0,
+        "locusId": 0,
+        "sysName": 0,
+        "scaffoldId": 0,
+        "begin": 0,
+        "end": 0,
+        "gene_length": 0,
+        "type": 0,
+        "strand": 0,
+        "gene": 0,
+        "desc": 0,
+        "GC": 0,
+        "n_total_experiments": 0,
+        "n_confident_experiments": 0,
+        "frac_not_confident": 24462,
+        "mean_fit_confident": 25658,
+        "frac_essential_all": 24462,
+        "frac_essential_confident": 25658,
+        "essentiality_class": 0
+      },
+      "experiments": {
+        "orgId": 0,
+        "expName": 0,
+        "expDesc": 0,
+        "expGroup": 0,
+        "mutantLibrary": 0,
+        "media": 0,
+        "mediaStrength": 0,
+        "condition_1": 0,
+        "concentration_1": 0,
+        "units_1": 0,
+        "condition_2": 0,
+        "concentration_2": 0,
+        "units_2": 0,
+        "condition_3": 0,
+        "concentration_3": 0,
+        "units_3": 0,
+        "temperature": 0,
+        "pH": 0,
+        "aerobic": 0,
+        "vessel": 0,
+        "liquid": 0,
+        "shaking": 0,
+        "cor12": 0,
+        "maxFit": 0,
+        "nGenerations": 1290
+      },
+      "fitness": {
+        "orgId": 0,
+        "locusId": 0,
+        "expName": 0,
+        "fit": 0,
+        "t": 0
+      },
+      "organisms": {
+        "orgId": 0,
+        "division": 0,
+        "genus": 0,
+        "species": 0,
+        "strain": 0,
+        "taxonomyId": 0
+      }
+    },
+    "fitness_fit": {
+      "min": -11.7747699035118,
+      "max": 15.0717599758728,
+      "mean": -0.10456332303423212,
+      "count": 8688562
+    },
+    "fitness_t": {
+      "min": -43.3259119225742,
+      "max": 113.479040508512,
+      "mean": -0.1891195180886126,
+      "count": 8688562
+    },
+    "experiments_cor12": {
+      "min": 0.200020600250391,
+      "max": 0.618118132520812,
+      "mean": 0.3022920733312475,
+      "count": 2164
+    },
+    "experiments_cor12_pct_ge_0_2": 100.0,
+    "genes_frac_essential_confident": {
+      "min": 0.0,
+      "max": 1.0,
+      "mean": 0.06626534178979868,
+      "count": 112860
+    },
+    "genes_n_confident_experiments": {
+      "min": 0.0,
+      "max": 252.0,
+      "mean": 22.087663697136833,
+      "count": 138518
+    },
+    "essentiality_class_counts": {
+      "non_essential": 93807,
+      "no_data": 25658,
+      "conditional": 17385,
+      "always_essential": 1668
+    },
+    "essentiality_class_pct": {
+      "always_essential": 1.2041756306039648,
+      "conditional": 12.55071543048557,
+      "non_essential": 67.72188452042334,
+      "no_data": 18.52322441848713
+    },
+    "experiments_by_media": {
+      "LB": 713,
+      "RCH2_defined_noCarbon": 539,
+      "RCH2_defined_Glucose_noNitrogen": 161,
+      "ShewMM_noCarbon": 157,
+      "RCH2_defined_noNitrogen": 83,
+      "R2A": 82,
+      "ShewMM_noNitrogen": 81,
+      "M9 minimal media_noCarbon": 72,
+      "MOPS minimal media_noCarbon": 47,
+      "RCH2_defined_no_vitamin": 36,
+      "MOPS minimal media_Glucose_noNitrogen": 34,
+      "M9 minimal media_noNitrogen": 32,
+      "RCH2_defined_glucose": 23,
+      "ShewMM": 17,
+      "RCH2_Lactate_Nitrate_YE": 15,
+      "RCH2_Lactate_1_M_Fe-Cu": 12,
+      "RCH2_defined_noCarbon_noVitamins": 12,
+      "RCH2_defined_glucose_TAPS": 9,
+      "M9+sucrose": 6,
+      "M9+polygalacturonate": 6
+    },
+    "experiments_by_condition_1_top10": {
+      "": 186,
+      "Agar": 43,
+      "Sodium nitrite": 37,
+      "L-Lysine": 33,
+      "L-Glutamine": 32,
+      "L-Isoleucine": 31,
+      "Glycerol": 30,
+      "D-Glucose": 30,
+      "Sodium nitrate": 29,
+      "Sodium D,L-Lactate": 29
+    },
+    "snapshot_genes": [
+      {
+        "orgId": "ANA3",
+        "locusId": "7022496",
+        "sysName": "Shewana3_4141",
+        "scaffoldId": "248373",
+        "begin": 1030,
+        "end": 1248,
+        "gene_length": 219,
+        "type": 1,
+        "strand": "+",
+        "gene": "",
+        "desc": "putative transposase (RefSeq)",
+        "GC": 0.4429,
+        "n_total_experiments": 95,
+        "n_confident_experiments": 11,
+        "frac_not_confident": 0.8842105263157894,
+        "mean_fit_confident": 0.20219046414655784,
+        "frac_essential_all": 0.0,
+        "frac_essential_confident": 0.0,
+        "essentiality_class": "non_essential"
+      },
+      {
+        "orgId": "ANA3",
+        "locusId": "7022497",
+        "sysName": "Shewana3_4142",
+        "scaffoldId": "248373",
+        "begin": 1491,
+        "end": 2471,
+        "gene_length": 981,
+        "type": 1,
+        "strand": "-",
+        "gene": "",
+        "desc": "IS4 family transposase (RefSeq)",
+        "GC": 0.476,
+        "n_total_experiments": 95,
+        "n_confident_experiments": 12,
+        "frac_not_confident": 0.8736842105263158,
+        "mean_fit_confident": -0.14487767821244465,
+        "frac_essential_all": 0.0,
+        "frac_essential_confident": 0.0,
+        "essentiality_class": "non_essential"
+      },
+      {
+        "orgId": "ANA3",
+        "locusId": "7022498",
+        "sysName": "Shewana3_4143",
+        "scaffoldId": "248373",
+        "begin": 2555,
+        "end": 2836,
+        "gene_length": 282,
+        "type": 1,
+        "strand": "-",
+        "gene": "",
+        "desc": "hypothetical protein (RefSeq)",
+        "GC": 0.4504,
+        "n_total_experiments": 0,
+        "n_confident_experiments": 0,
+        "frac_not_confident": NaN,
+        "mean_fit_confident": NaN,
+        "frac_essential_all": NaN,
+        "frac_essential_confident": NaN,
+        "essentiality_class": "no_data"
+      }
+    ],
+    "snapshot_experiments": [
+      {
+        "orgId": "ANA3",
+        "expName": "set1H1",
+        "expDesc": "L-Asparagine (N)",
+        "expGroup": "nitrogen source",
+        "mutantLibrary": "ANA3_ML1",
+        "media": "ShewMM_noNitrogen",
+        "mediaStrength": 1.0,
+        "condition_1": "L-Asparagine",
+        "concentration_1": "20",
+        "units_1": "mM",
+        "condition_2": "",
+        "concentration_2": "",
+        "units_2": "",
+        "condition_3": "",
+        "concentration_3": "",
+        "units_3": "",
+        "temperature": "30",
+        "pH": "7",
+        "aerobic": "Aerobic",
+        "vessel": "tube",
+        "liquid": "Liquid",
+        "shaking": "200 rpm",
+        "cor12": 0.325697686517539,
+        "maxFit": 4.24116516344664,
+        "nGenerations": 4.90689059560852
+      },
+      {
+        "orgId": "ANA3",
+        "expName": "set1H10",
+        "expDesc": "L-Arginine (N)",
+        "expGroup": "nitrogen source",
+        "mutantLibrary": "ANA3_ML1",
+        "media": "ShewMM_noNitrogen",
+        "mediaStrength": 1.0,
+        "condition_1": "L-Arginine",
+        "concentration_1": "10",
+        "units_1": "mM",
+        "condition_2": "",
+        "concentration_2": "",
+        "units_2": "",
+        "condition_3": "",
+        "concentration_3": "",
+        "units_3": "",
+        "temperature": "30",
+        "pH": "7",
+        "aerobic": "Aerobic",
+        "vessel": "tube",
+        "liquid": "Liquid",
+        "shaking": "200 rpm",
+        "cor12": 0.336923900956289,
+        "maxFit": 2.91355323247323,
+        "nGenerations": 4.25550073314839
+      },
+      {
+        "orgId": "ANA3",
+        "expName": "set1H13",
+        "expDesc": "L-Alanine (C)",
+        "expGroup": "carbon source",
+        "mutantLibrary": "ANA3_ML1",
+        "media": "ShewMM_noCarbon",
+        "mediaStrength": 1.0,
+        "condition_1": "L-Alanine",
+        "concentration_1": "20",
+        "units_1": "mM",
+        "condition_2": "",
+        "concentration_2": "",
+        "units_2": "",
+        "condition_3": "",
+        "concentration_3": "",
+        "units_3": "",
+        "temperature": "30",
+        "pH": "7",
+        "aerobic": "Aerobic",
+        "vessel": "tube",
+        "liquid": "Liquid",
+        "shaking": "200 rpm",
+        "cor12": 0.369109465159085,
+        "maxFit": 5.53561493134807,
+        "nGenerations": NaN
+      }
+    ],
+    "snapshot_fitness": [
+      {
+        "orgId": "ANA3",
+        "locusId": "7022496",
+        "expName": "set1H1",
+        "fit": -0.251814035822457,
+        "t": -0.398131349639348
+      },
+      {
+        "orgId": "ANA3",
+        "locusId": "7022496",
+        "expName": "set1H10",
+        "fit": -0.109678480178647,
+        "t": -0.198420914361242
+      },
+      {
+        "orgId": "ANA3",
+        "locusId": "7022496",
+        "expName": "set1H13",
+        "fit": 0.275650297935021,
+        "t": 0.582536779267018
+      }
+    ],
+    "snapshot_organisms": [
+      {
+        "orgId": "ANA3",
+        "division": "Gammaproteobacteria",
+        "genus": "Shewanella",
+        "species": "sp.",
+        "strain": "ANA-3",
+        "taxonomyId": 94122
+      },
+      {
+        "orgId": "BFirm",
+        "division": "Betaproteobacteria",
+        "genus": "Burkholderia",
+        "species": "phytofirmans",
+        "strain": "PsJN",
+        "taxonomyId": 398527
+      },
+      {
+        "orgId": "Burk376",
+        "division": "Betaproteobacteria",
+        "genus": "Paraburkholderia",
+        "species": "bryophila",
+        "strain": "376MFSha3.1",
+        "taxonomyId": 1169143
+      }
+    ]
+  },
+  "media_experiments": {
+    "rows": 4870,
+    "columns": [
+      "orgId",
+      "organism",
+      "name",
+      "Group",
+      "short",
+      "Media",
+      "Condition_1",
+      "Concentration_1",
+      "Units_1",
+      "Temperature",
+      "pH",
+      "Aerobic_v_Anaerobic",
+      "Shaking",
+      "Growth.Method",
+      "has_exact_replicate",
+      "has_similar_replicate",
+      "Organism_reference",
+      "Experiment_source_dataset",
+      "Experiment_source_url",
+      "Media_source_dataset",
+      "Media_source_url"
+    ]
+  },
+  "embeddings": {
+    "present": true,
+    "path": "/home/ds85/projects/GeneEssentiality/data/mvp/embeddings/protein_embeddings.pt",
+    "keys": [
+      "inputs_embeds",
+      "group_embeds",
+      "group_labels"
+    ],
+    "inputs_embeds_shape": [
+      138518,
+      960
+    ],
+    "group_embeds_shape": [
+      138518,
+      960
+    ],
+    "group_labels_len": 138518
+  },
+  "fasta": {
+    "proteins_fasta_exists": true,
+    "proteins_fasta_sequences": 138518,
+    "organism_fastas_dir_exists": true,
+    "organism_fastas_files": 27
+  }
+}

@@ -6,3 +6,5 @@ biopython>=1.80
 esm>=3.2.1
 tqdm>=4.65
 openpyxl>=3.1
+matplotlib>=3.7
+seaborn>=0.12

@@ -90,9 +90,8 @@ DATA INTEGRITY:
 ML PIPELINE RECOMMENDATIONS:
 1. Extract: JOIN Gene + GeneFitness + Experiment with quality filters
 2. Features: gene_length, GC, strand, domains, localization
-3. Sliding window: Sort by scaffold + position, handle boundaries
-4. Splits: Use Ortholog table for cluster-based cross-validation
-5. Class balance: Weight loss for fitness < -1, use AUPRC metric
+3. Splits: Use Ortholog table for cluster-based cross-validation
+4. Class balance: Weight loss for fitness < -1, use AUPRC metric
 
 KEY FIELDS FOR PROJECT:
 - Gene: locusId, scaffoldId, begin, end, strand, GC
