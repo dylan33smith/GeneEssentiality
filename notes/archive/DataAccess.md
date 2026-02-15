@@ -74,7 +74,7 @@ fitness = pd.read_parquet("data/mvp/fitness.parquet")
 - `non_essential`: Essential in <10% of confident experiments (62,018 genes in MVP)
 - `no_data`: No confident fitness measurements (50,496 genes in MVP)
 
-**Key for sliding window**: Sort by `(orgId, scaffoldId, begin)` to get genomic order.
+**Genomic order**: Sort by `(orgId, scaffoldId, begin)`.
 
 ---
 
@@ -251,23 +251,7 @@ training_data = fitness.merge(
 )
 ```
 
-### Step 2: Sliding Window - Get gene neighbors
-
-```python
-# Sort genes for genomic order
-genes_sorted = genes.sort_values(['orgId', 'scaffoldId', 'begin'])
-
-# Group by organism + scaffold for window construction
-for (org, scaffold), group in genes_sorted.groupby(['orgId', 'scaffoldId']):
-    group = group.reset_index(drop=True)
-    # Each gene at index i has neighbors at i-5 to i+5
-    for i, row in group.iterrows():
-        window_start = max(0, i - 5)
-        window_end = min(len(group), i + 6)
-        neighbors = group.iloc[window_start:window_end]
-```
-
-### Step 3: ESM-2 Embeddings - Load sequences
+### Step 2: ESM-2 Embeddings - Load sequences
 
 ```python
 from Bio import SeqIO
@@ -282,7 +266,7 @@ gene_key = f"{orgId}:{locusId}"
 seq = sequences[gene_key]
 ```
 
-### Step 4: Cluster Splits - Use orthologs
+### Step 3: Cluster Splits - Use orthologs
 
 ```python
 orthologs = pd.read_parquet("data/processed/orthologs.parquet")
@@ -298,7 +282,7 @@ mvp_orthologs = orthologs[
 # Use for train/val/test splits to prevent sequence leakage
 ```
 
-### Step 5: Condition Encoding - Multi-hot vectors
+### Step 4: Condition Encoding - Multi-hot vectors
 
 ```python
 import json
@@ -331,7 +315,7 @@ vec = encode_condition("LB", "Sodium nitrite")  # shape: (32 + 192,) = (224,)
 |---------------|------|-------------|
 | Target variable | `mvp/fitness.parquet` | fit, t |
 | Gene features | `mvp/genes.parquet` | gene_length, GC, strand, begin, end |
-| Gene neighbors | `mvp/genes.parquet` | orgId, scaffoldId, begin (sort order) |
+| Genomic order | `mvp/genes.parquet` | orgId, scaffoldId, begin (sort order) |
 | Essentiality class | `mvp/genes.parquet` | essentiality_class, frac_essential |
 | Experiment conditions | `mvp/experiments.parquet` | media, condition_1, expGroup, aerobic |
 | Protein sequences | `mvp/proteins.fasta` | FASTA format |

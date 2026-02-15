@@ -1,6 +1,6 @@
 # Logic flow
 
-Step-by-step pipeline from path resolution to gene-level stats and essentiality class. Planned steps (sliding window, embeddings, model training) are noted as not yet implemented.
+Step-by-step pipeline from path resolution to gene-level stats and essentiality class. Planned steps (embeddings, model training) are noted as not yet implemented.
 
 ---
 
@@ -92,8 +92,7 @@ flowchart TD
 
 ## Planned steps (not implemented)
 
-- **Sliding window:** Target gene ±5 neighbors for operon context; not yet in the pipeline.
-- **Embeddings integration:** Load `data/mvp/embeddings/protein_embeddings.pt` (ProteomeLM format) and feed into the model; script exists but not wired into `src`.
+- **Embeddings integration:** Generate per-organism ProteomeLM .pt files via `scripts/generate_proteomelm_embeddings.py`; load the .pt file(s) (keys `embeddings`, `group_labels`) and merge with genes by `group_labels` (orgId:locusId); not yet wired into `src`.
 - **Condition encoding:** Use `condition_vocab.json` to build multi-hot (or other) condition vectors.
 - **Model training:** Transformer/MLP consuming embeddings + condition vectors → fitness (or essentiality); not implemented.
 - **Train/val/test splits:** Homology-based (e.g. 50% identity threshold) to avoid leakage; planned per README, not yet implemented.

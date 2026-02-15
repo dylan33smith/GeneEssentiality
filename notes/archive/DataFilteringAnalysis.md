@@ -81,7 +81,7 @@ GENE DATA:
 - 221,005 protein-coding genes
 - Gene table has: locusId, scaffold, begin, end, strand, GC content
 - aaseqs file: FASTA format protein sequences
-- For sliding window: sort by scaffold + begin position
+- Genomic order: sort by scaffold + begin position
 
 RECOMMENDED COMPOSITE STRING FORMAT:
 {Media}_{Condition1}_{Concentration}{Units}_{Temperature}C_{Aerobic}
