@@ -106,14 +106,15 @@ Path: `data/media_composition.xlsx`. **Sheet index 2** (third sheet) is loaded b
 
 ### Embeddings (ProteomeLM .pt files)
 
-Produced by `scripts/generate_proteomelm_embeddings.py` from a single-organism FASTA (e.g. `data/mvp/organism_fastas/Keio.fasta`). One .pt per organism; combine or load separately for full MVP. **Not loaded by `src`**; embeddings are not yet integrated into the pipeline.
+Produced by `scripts/generate_proteomelm_embeddings.py` from a single-organism FASTA (e.g. `data/mvp/organism_fastas/Keio.fasta`). Stored in `data/mvp/ProtLM_embedddings/`; one .pt per organism. **With y labels:** `scripts/add_y_labels_to_embeddings.py` produces .pt files with `embeddings`, `group_labels`, and `y` in `data/mvp/ProtLM_embeddings_with_labels/`. **Not loaded by `src`**; embeddings are not yet integrated into the pipeline.
 
 **Format (per-organism .pt):**
 
-- `embeddings`: `torch.Tensor` of shape `(N, D)` — ProteomeLM contextualized embedding per gene (output of ProteomeLM transformer; D is model-dependent, e.g. 1152 for default ProteomeLM-S logits).
-- `group_labels`: `list` of length N — gene identifiers in format `orgId:locusId` (same order as rows in `embeddings`), for joining to `genes.parquet` (e.g. match to `orgId` + `locusId` or a composite key).
+- `embeddings`: `torch.Tensor` of shape `(N, D)` — ProteomeLM contextualized embedding per gene (D model-dependent, e.g. 1152 for ProteomeLM-S). Each embedding integrates sequence-derived information (ESM-C) and proteome-scale context (the rest of that organism's proteome). See `notes/07_PROTEOMELM_EMBEDDINGS_RESEARCH.md`.
+- `group_labels`: `list` of length N — gene identifiers `orgId:locusId` (same order as `embeddings`).
+- `y` (planned): `torch.Tensor` or array of length N — essentiality_class as 0=always_essential, 1=conditional, 2=non_essential, -1=no_data; aligned to embeddings for downstream loading.
 
-**Pipeline:** FASTA (headers `>orgId:locusId`) → ESM-C 600M (via ProteomeLM package) → ProteomeLM transformer → save `embeddings` + `group_labels`. Run from repo root with ProteomeLM on PYTHONPATH.
+**Pipeline:** FASTA → ESM-C 600M → ProteomeLM transformer → save `embeddings` + `group_labels`. **Planned:** Post-process to add `y` from `genes.parquet`.
 
 ---
 

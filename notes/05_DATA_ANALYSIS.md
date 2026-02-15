@@ -200,12 +200,12 @@ Same format as Stage I; first three rows of each table (same genes/experiments a
 
 The pre-built **genes.parquet** tables (processed and mvp) already contain `n_confident_experiments`, `frac_essential_confident`, and `essentiality_class`; they were produced by the same logic (e.g. via an upstream script or `aggregate_fitness_to_genes` plus merge).
 
-**Embeddings:** Per-organism .pt files are produced by `scripts/generate_proteomelm_embeddings.py` (FASTA → ESM-C 600M → ProteomeLM transformer → .pt). Each .pt contains `embeddings` (tensor shape `[N, D]`) and `group_labels` (list of N strings `orgId:locusId`). **Embeddings are not yet integrated into the pipeline:** no code under `src/` loads these files or joins them to gene labels. Alignment to genes is by matching `group_labels` to `orgId` and `locusId` (or a composite key) in `genes.parquet`. Wiring to labels is intended but not built.
+**Embeddings:** Per-organism .pt files are produced by `scripts/generate_proteomelm_embeddings.py` (FASTA → ESM-C 600M → ProteomeLM transformer → .pt). Each .pt contains `embeddings` (tensor shape `[N, D]`) and `group_labels` (list of N strings `orgId:locusId`). Embeddings are **proteome-contextualized**: each gene's embedding reflects its sequence (via ESM-C) plus its relationship to the rest of that organism's proteome (via ProteomeLM). See `notes/07_PROTEOMELM_EMBEDDINGS_RESEARCH.md`. **Embeddings are not yet integrated into the pipeline:** no code under `src/` loads these files or joins them to gene labels.
 
 ### Structure
 
 - **Gene-level table:** The **genes** DataFrame (processed or mvp) is the model-ready label source: one row per gene with `essentiality_class` and optional numeric columns (e.g. frac_essential_confident, n_confident_experiments). Shape: (138,518, 18) for MVP; (221,005, 18) for processed (18 columns as of discovery).
-- **Embeddings (current state):** Run `generate_proteomelm_embeddings.py` once per organism FASTA in `data/mvp/organism_fastas/` to obtain one .pt per organism; each has `embeddings` (N, D) and `group_labels` (N strings `orgId:locusId`). Concatenating all organism outputs yields the full MVP set. These are not yet joined to the gene table in code; the intended end state is to load the .pt file(s) and align by `group_labels` to the genes table for training.
+- **Embeddings (current state):** Per-organism .pt files in `data/mvp/ProtLM_embedddings/`. With y labels: `data/mvp/ProtLM_embeddings_with_labels/` (each .pt: `embeddings`, `group_labels`, `y`).
 
 ### Class balance (MVP)
 
@@ -221,6 +221,16 @@ From the discovery script, gene-level essentiality class counts and percentages:
 **Total genes (MVP):** 138,518.
 
 The distribution is **highly imbalanced**: most genes are non_essential or no_data; always_essential is a small minority. This motivates metrics such as **AUPRC** (Area Under Precision-Recall Curve) for evaluation rather than accuracy alone.
+
+### MLP baseline (planned — immediate next step)
+
+A simple MLP will take the ProteomeLM embedding of a gene and predict essentiality class. **Input:** ProteomeLM embeddings only (no media, no condition encoding). **Data:** Load from `data/mvp/ProtLM_embeddings_with_labels/` (each .pt: embeddings, group_labels, y). **Exclude no_data:** filter to y ≠ -1 (~112,860 genes). **Class balance:** always_essential ~1.5%, conditional ~12.5%, non_essential ~67.7% of the filtered set. Use **class-weighted CrossEntropyLoss** (inverse frequency) to handle imbalance. **Goal:** Assess whether ProteomeLM embeddings alone yield relatively good results for always_essential and conditional prediction.
+
+**Train/val/test split:** **Organism-based** (split by orgId, not by gene). Assign organisms to train/val/test (e.g. ~19/4/4 of the 27 MVP organisms); all genes from a held-out organism go to val or test. Rationale: ProteomeLM embeddings are proteome-contextualized, so holding out an organism means holding out a novel proteomic context—a natural generalization test. See `notes/06_HOMOLOGY_VS_ORGANISM_SPLITS.md` and `notes/07_PROTEOMELM_EMBEDDINGS_RESEARCH.md`.
+
+**Metrics:** accuracy, weighted F1, **AUPRC for always_essential**, **AUPRC for conditional** (primary interest).
+
+**Architecture:** input dim = embedding size (e.g. 1152 for ProteomeLM-S), 1–2 hidden layers (256–512 units), ReLU, dropout, output 3 classes.
 
 ### Current vs intended state
 
