@@ -28,60 +28,16 @@ Instead of using all 48 organisms, the MVP will restrict training to the largest
   - Vector B (Stress): One-Hot encoding of the ~100 distinct chemical stressors in this subset.
   - Input = Concatenate(Vector A, Vector B).
 
-### 3. PHASE II: ARCHITECTURE & TRAINING
-------------------------------------
-Goal: A Transformer that fuses gene (protein) representation with environmental context.
-
-3.1 The Model: "Context-Aware Transformer"
-* Input Dimensions: (Batch_Size, Sequence_Length=2, Embedding_Dim=1280)
-* Token Structure:
-  - Token 0: [Condition_Embedding] (The "Query" Context)
-  - Token 1: [Gene_Embedding] (The target gene's protein embedding)
-* Mechanism:
-  - The Self-Attention layers allow Token 0 (Condition) to attend to the gene embedding.
-  - Example: If Condition="Antibiotic X", the model learns condition-specific fitness from the gene's sequence representation.
-
-3.2 Representation (Pre-Computed)
-* Protein Encoder: ESM-2 (esm2_t33_650M_UR50D).
-  - Action: Run inference ONCE. Save vectors to disk. Do not fine-tune (too expensive for MVP).
-* Metadata Injection:
-  - Concatenate [Gene_Length, Normalized_Reads] to the protein vector to correct for library bias.
-
-3.3 Training Objectives
-* Primary Loss: Weighted MSE.
-  - Weight samples with Fitness < -1.0 (Essential) by 5x.
-  - Weight samples with Fitness > -0.5 (Neutral) by 1x.
-* Metric:
-  - AUPRC (Area Under Precision-Recall Curve) for detecting essential genes.
-
-### 4. PHASE III: VALIDATION (THE "HONEST" SPLIT)
----------------------------------------------
-Goal: Ensure the model isn't just memorizing homologous genes.
-
-4.1 Homology Splitting
-* Protocol:
-  1. Cluster all proteins in the subset at 50% Identity (using MMseqs2).
-  2. Assign Clusters to Train/Val/Test (70/15/15).
-  3. Strict Rule: No sequence in Test can have >50% identity to any sequence in Train.
-
-4.2 The "Generalization" Benchmarks
-* Benchmark A (Chemical Generalization):
-  - Hold out "Sodium Nitrite" experiments entirely.
-  - Can the model predict Nitrite sensitivity based on generic "Stress" patterns?
-* Benchmark B (Organism Generalization):
-  - Hold out "Pseudomonas putida" entirely.
-  - Can the model predict its fitness using only E. coli/Klebsiella training data?
-
-### 5. PHASE IV: FUTURE DEVELOPMENT (V2 EXPANSION)
+### 3. FUTURE DEVELOPMENT (V2 EXPANSION)
 ----------------------------------------------
 Goal: Expand to the full database and "Zero-Shot" chemical prediction.
 
-5.1 Handling the "Silos" (Marine/Anaerobes)
+3.1 Handling the "Silos" (Marine/Anaerobes)
 * Action: Introduce "Phylogenetic Embeddings."
   - Add a token representing the organism's evolutionary distance (e.g., 16S rRNA embedding).
   - This helps the model adjust for the fact that Marine bacteria have different baselines than Gut bacteria.
 
-5.2 Chemical "First Principles" (The SMILES Upgrade)
+3.2 Chemical "First Principles" (The SMILES Upgrade)
 * Limitation of MVP: It treats "Copper" and "Zinc" as random IDs (0 and 1). It doesn't know they are both metals.
 * Upgrade:
   - Replace One-Hot Stress vectors with Molecular Graph Embeddings (e.g., ChemBERTa or Mol2Vec).
@@ -90,24 +46,13 @@ Goal: Expand to the full database and "Zero-Shot" chemical prediction.
 ### 6. EXECUTION CHECKLIST (PRIORITIZED)
 ------------------------------------
 
-STEP 1: Data Engineering (Week 1-2)
-[MVP] Write SQL to extract the "Terrestrial Subset" (Organisms using LB/RCH2).
-[MVP] Generate ESM-2 (or ProteomeLM) embeddings for this subset.
-[MVP] Create "Cluster Splits" (50% identity).
+STEP 1: Data Engineering
+[DONE] Terrestrial Subset: MVP data exists in `data/mvp/` (27 organisms, LB/RCH2/M9).
+[DONE] ProteomeLM embeddings: per-organism .pt files in `data/mvp/ProtLM_embedddings/` (embeddings + group_labels).
+[DONE] Y label vectors: `scripts/add_y_labels_to_embeddings.py` adds y to each .pt; output in `data/mvp/ProtLM_embeddings_with_labels/`.
 
-STEP 2: Baseline Modeling (Week 3)
-[MVP] Train a simple "Mean Regressor" (predicts average fitness of the gene across all conditions). *This is your baseline to beat.*
-[MVP] Train a simple "Random Forest" (using just gene features).
-
-STEP 3: Transformer Development (Week 4-5)
-[MVP] Build the 'ContextTransformer' class in PyTorch.
-[MVP] Implement the Weighted MSE loss.
-[MVP] Train on the Terrestrial Subset.
-
-STEP 4: Analysis & V2 Planning (Week 6+)
-[Report] Measure performance on "Held Out Organism" (Pseudomonas putida).
-[V2] Scrape SMILES strings for all 350 conditions.
-[V2] Integrate Marine/Anaerobe data.
+STEP 2: MLP Baseline
+[MVP] **MLP (ProteomeLM embedding → essentiality):** Load embeddings + y from `data/mvp/ProtLM_embeddings_with_labels/`; filter to y ≠ -1 (no_data). Train MLP: embedding → 3-class (always_essential, conditional, non_essential). Class-weighted CrossEntropyLoss. Organism-based split (~19/4/4). Metrics: AUPRC for always_essential, AUPRC for conditional (primary interest), accuracy, weighted F1.
 
 ### 7. RISK MANAGEMENT
 ------------------

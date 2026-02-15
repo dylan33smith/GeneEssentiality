@@ -19,14 +19,12 @@ All data come from the **Fitness Browser** database: a public resource aggregati
 
 - **Data loaders** (`src/data_io`): Path resolution (project root, `data/`, `processed/`, `mvp/`) and loading of Parquet tables (genes, experiments, fitness, organisms) and media Excel (sheet 2). All access via `src` functions; no raw paths in shared code.
 - **Fitness and essentiality** (`src/fitness`): Vectorized aggregation of raw fitness to gene-level statistics, and assignment of **essentiality class** using the 80%/10% rules (confident = |t| ≥ 2, essential in an experiment = fit &lt; −1; gene-level: &gt;80% → always_essential, 10–80% → conditional, &lt;10% → non_essential, no confident exps → no_data).
-- **ProteomeLM embedding script** (`scripts/generate_proteomelm_embeddings.py`): Uses the ProteomeLM package (ESM-C 600M + ProteomeLM transformer) to produce per-gene embedding vectors from a single-organism FASTA. Output .pt has `embeddings` and `group_labels` (orgId:locusId) for joining to genes. Run once per organism; combine for full MVP.
+- **ProteomeLM embedding script** (`scripts/generate_proteomelm_embeddings.py`): Produces proteome-contextualized embeddings (ESM-C + ProteomeLM) from a single-organism FASTA. **Done:** Embeddings in `data/mvp/ProtLM_embedddings/` (one .pt per organism: `embeddings`, `group_labels`). See `notes/07_PROTEOMELM_EMBEDDINGS_RESEARCH.md`.
+- **Y label script** (`scripts/add_y_labels_to_embeddings.py`): **Done.** Adds `y` (essentiality_class → 0/1/2/-1) to each .pt; output in `data/mvp/ProtLM_embeddings_with_labels/`.
 
 **Not yet implemented:**
 
-- ML model (Transformer/MLP) consuming embeddings and conditions to predict fitness.
-- Integration of embeddings (loading ProteomeLM .pt file(s) and joining to genes by `group_labels`) into the main pipeline.
-- Condition encoding using `condition_vocab.json` (multi-hot vectors).
-- Train/validation/test splits (e.g. homology-based at 50% identity).
+- **MLP baseline (immediate next step):** Load .pt from `data/mvp/ProtLM_embeddings_with_labels/` (embeddings + y); filter to y ≠ -1. Train MLP: embedding → 3-class. Organism-based split. Metrics: AUPRC (always_essential, conditional), accuracy, weighted F1.
 
 These are planned in the project protocol (README).
 

@@ -92,7 +92,8 @@ flowchart TD
 
 ## Planned steps (not implemented)
 
-- **Embeddings integration:** Generate per-organism ProteomeLM .pt files via `scripts/generate_proteomelm_embeddings.py`; load the .pt file(s) (keys `embeddings`, `group_labels`) and merge with genes by `group_labels` (orgId:locusId); not yet wired into `src`.
-- **Condition encoding:** Use `condition_vocab.json` to build multi-hot (or other) condition vectors.
-- **Model training:** Transformer/MLP consuming embeddings + condition vectors → fitness (or essentiality); not implemented.
-- **Train/val/test splits:** Homology-based (e.g. 50% identity threshold) to avoid leakage; planned per README, not yet implemented.
+**Execution order:**
+
+1. **Embeddings (done):** Per-organism .pt files in `data/mvp/ProtLM_embedddings/`. Each .pt: `embeddings`, `group_labels`.
+2. **Y label vectors (done):** `scripts/add_y_labels_to_embeddings.py` adds `y` to each .pt; output in `data/mvp/ProtLM_embeddings_with_labels/`.
+3. **MLP baseline (immediate next step):** Load .pt from `data/mvp/ProtLM_embeddings_with_labels/`; filter to y ≠ -1. Train MLP: embedding → 3-class. Organism-based split (~19/4/4). Metrics: AUPRC (always_essential, conditional), accuracy, weighted F1.
