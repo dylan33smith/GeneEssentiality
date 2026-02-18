@@ -11,8 +11,10 @@ from src.pipeline.steps import PipelineStep, run_step_with_logging
 logger = logging.getLogger(__name__)
 
 STEP_ORDER: list[str] = [
-    "raw_to_parquet",
+    "extract_data",
+    "classify_genes_processed",
     "filter_mvp",
+    "classify_genes_mvp",
     "create_fastas",
     "generate_embeddings",
     "label_embeddings",
@@ -21,15 +23,18 @@ STEP_ORDER: list[str] = [
 
 def _build_default_steps() -> list[PipelineStep]:
     """Lazily import and instantiate all steps in canonical order."""
+    from src.pipeline.classify_genes import ClassifyGenesStep
     from src.pipeline.create_fastas import CreateFastasStep
+    from src.pipeline.extract_data import ExtractDataStep
     from src.pipeline.filter_mvp import FilterMvpStep
     from src.pipeline.generate_embeddings import GenerateEmbeddingsStep
     from src.pipeline.label_embeddings import LabelEmbeddingsStep
-    from src.pipeline.raw_to_parquet import RawToParquetStep
 
     return [
-        RawToParquetStep(),
+        ExtractDataStep(),
+        ClassifyGenesStep("processed"),
         FilterMvpStep(),
+        ClassifyGenesStep("mvp"),
         CreateFastasStep(),
         GenerateEmbeddingsStep(),
         LabelEmbeddingsStep(),

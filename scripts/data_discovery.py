@@ -116,6 +116,19 @@ def run_subset(subset: str) -> dict:
         stats["essentiality_class_counts"] = ec.to_dict()
         stats["essentiality_class_pct"] = {k: 100.0 * ec.get(k, 0) / total for k in ESSENTIALITY_CLASSES}
 
+    if "essentiality_class" in genes.columns:
+        per_org = (
+            genes.groupby(["orgId", "essentiality_class"])
+            .size()
+            .unstack(fill_value=0)
+            .reindex(columns=ESSENTIALITY_CLASSES, fill_value=0)
+        )
+        per_org["total_genes"] = per_org.sum(axis=1)
+        per_org_pct = per_org[ESSENTIALITY_CLASSES].div(per_org["total_genes"], axis=0) * 100
+        per_org_pct.columns = [f"{c}_pct" for c in ESSENTIALITY_CLASSES]
+        per_org_full = pd.concat([per_org, per_org_pct], axis=1)
+        stats["per_organism_class_distribution"] = per_org_full.reset_index().to_dict(orient="records")
+
     if "media" in experiments.columns:
         stats["experiments_by_media"] = experiments["media"].value_counts().head(20).to_dict()
     if "condition_1" in experiments.columns:
@@ -190,6 +203,22 @@ def main() -> int:
                 print("  Essentiality classes:", stats["essentiality_class_counts"])
             if "essentiality_class_pct" in stats:
                 print("  Essentiality %:", stats["essentiality_class_pct"])
+            if "per_organism_class_distribution" in stats:
+                print(f"  Per-organism class distribution ({len(stats['per_organism_class_distribution'])} organisms):")
+                for row in stats["per_organism_class_distribution"]:
+                    org = row["orgId"]
+                    total = row["total_genes"]
+                    ae = row.get("always_essential", 0)
+                    cond = row.get("conditional", 0)
+                    ne = row.get("non_essential", 0)
+                    nd = row.get("no_data", 0)
+                    print(
+                        f"    {org:>20s}: {total:>6d} genes | "
+                        f"AE {ae:>5d} ({row.get('always_essential_pct', 0):5.1f}%) | "
+                        f"C {cond:>5d} ({row.get('conditional_pct', 0):5.1f}%) | "
+                        f"NE {ne:>5d} ({row.get('non_essential_pct', 0):5.1f}%) | "
+                        f"ND {nd:>5d} ({row.get('no_data_pct', 0):5.1f}%)"
+                    )
             print()
         except FileNotFoundError as e:
             print(f"  MISSING FILE: {e}")

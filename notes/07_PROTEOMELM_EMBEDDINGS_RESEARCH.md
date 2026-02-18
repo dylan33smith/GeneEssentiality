@@ -53,11 +53,11 @@ The final embedding of protein A in organism X is:
 
 ## 5. What Our Script Produces
 
-From `scripts/generate_proteomelm_embeddings.py`:
+From the `generate_embeddings` pipeline step (`src/pipeline/generate_embeddings.py`), run via `scripts/run_pipeline.py`:
 
 - **Input:** Single-organism FASTA (all proteins from one genome)
 - **Process:** ESM-C encodes each sequence → ProteomeLM processes the full set of embeddings (whole proteome) → outputs contextualized embeddings
-- **Output:** `output.logits` — one embedding per protein, aligned to `group_labels` (orgId:locusId). Stored in `data/mvp/ProtLM_embedddings/` (one .pt per organism). With y labels: `scripts/add_y_labels_to_embeddings.py` produces `data/mvp/ProtLM_embeddings_with_labels/`.
+- **Output:** `output.logits` — one embedding per protein, aligned to `group_labels` (orgId:locusId). Stored in `data/mvp/ProtLM_embedddings/` (one .pt per organism). With y labels: the `label_embeddings` step produces `data/mvp/ProtLM_embeddings_with_labels/`.
 
 The embeddings are **proteome-contextualized**: each gene's embedding reflects its relationship to the rest of that organism's proteome.
 

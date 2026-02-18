@@ -94,6 +94,7 @@ flowchart TD
 
 **Execution order:**
 
-1. **Embeddings (done):** Per-organism .pt files in `data/mvp/ProtLM_embedddings/`. Each .pt: `embeddings`, `group_labels`.
-2. **Y label vectors (done):** `scripts/add_y_labels_to_embeddings.py` adds `y` to each .pt; output in `data/mvp/ProtLM_embeddings_with_labels/`.
-3. **MLP baseline (immediate next step):** Load .pt from `data/mvp/ProtLM_embeddings_with_labels/`; filter to y ≠ -1. Train MLP: embedding → 3-class. Organism-based split (~19/4/4). Metrics: AUPRC (always_essential, conditional), accuracy, weighted F1.
+1. **Pipeline orchestration:** Run `scripts/run_pipeline.py` to execute steps (extract_data → classify_genes → filter_mvp → create_fastas → generate_embeddings → label_embeddings). Use `--step`, `--from`, or `--to` for partial runs.
+2. **Embeddings (done):** Per-organism .pt files in `data/mvp/ProtLM_embedddings/`. Each .pt: `embeddings`, `group_labels`. Produced by `generate_embeddings` step.
+3. **Y label vectors (done):** `label_embeddings` step adds `y` to each .pt; output in `data/mvp/ProtLM_embeddings_with_labels/`.
+4. **MLP baseline (immediate next step):** Load .pt from `data/mvp/ProtLM_embeddings_with_labels/`; filter to y ≠ -1. Train MLP: embedding → 3-class. Organism-based split (~19/4/4). Metrics: AUPRC (always_essential, conditional), accuracy, weighted F1.

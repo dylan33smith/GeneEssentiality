@@ -8,24 +8,36 @@ data:
   processed_dir: data/processed
   mvp_dir: data/mvp
 
+extract_data:
+  db_filename: feba.db
+  raw_sequences_filename: aaseqs
+
+classify_genes:
+  confident_t_threshold: 1.0
+  essentiality_fit_threshold: -1.0
+  always_essential_frac: 0.8
+  conditional_min_frac: 0.1
+
+mvp_filter:
+  media_prefixes: [LB, RCH2, M9]
+  min_cor12: 0.2
+  excluded_exp_groups: [plant]
+  excluded_media: ["Potato Dextrose Broth"]
+
 create_fastas:
   subsets: [processed, mvp]
 
 embeddings:
-  proteomelm_model: "Bitbol-Lab/ProteomeLM-S"
+  proteomelm_model: "Bitbol-Lab/ProteomeLM-L"
   device: "cuda:0"
   input_subdir: organism_fastas
   output_subdir: ProtLM_embedddings
 
 labels:
-  input_subdir: ProtLM_embedddings
+  input_subdir: ProtLM_embeddings
   output_subdir: ProtLM_embeddings_with_labels
   class_to_int:
     always_essential: 0
     conditional: 1
     non_essential: 2
     no_data: -1
-
-mvp_filter:
-  media: [LB, RCH2_defined, M9]
-  min_cor12: 0.2

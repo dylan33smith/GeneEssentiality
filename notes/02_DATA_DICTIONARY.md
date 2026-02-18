@@ -106,7 +106,7 @@ Path: `data/media_composition.xlsx`. **Sheet index 2** (third sheet) is loaded b
 
 ### Embeddings (ProteomeLM .pt files)
 
-Produced by `scripts/generate_proteomelm_embeddings.py` from a single-organism FASTA (e.g. `data/mvp/organism_fastas/Keio.fasta`). Stored in `data/mvp/ProtLM_embedddings/`; one .pt per organism. **With y labels:** `scripts/add_y_labels_to_embeddings.py` produces .pt files with `embeddings`, `group_labels`, and `y` in `data/mvp/ProtLM_embeddings_with_labels/`. **Not loaded by `src`**; embeddings are not yet integrated into the pipeline.
+Produced by the `generate_embeddings` pipeline step (`src/pipeline/generate_embeddings.py`) from per-organism FASTAs (e.g. `data/mvp/organism_fastas/Keio.fasta`). Run via `scripts/run_pipeline.py`. Stored in `data/mvp/ProtLM_embedddings/`; one .pt per organism. **With y labels:** the `label_embeddings` step (`src/pipeline/label_embeddings.py`) produces .pt files with `embeddings`, `group_labels`, and `y` in `data/mvp/ProtLM_embeddings_with_labels/`. **Not loaded by `src`**; embeddings are not yet integrated into the pipeline.
 
 **Format (per-organism .pt):**
 

@@ -32,6 +32,38 @@ class DataPaths:
 
 
 @dataclass
+class ExtractDataConfig:
+    """Parameters for the extract_data step."""
+
+    db_filename: str = "feba.db"
+    raw_sequences_filename: str = "aaseqs"
+
+
+@dataclass
+class ClassifyGenesConfig:
+    """Parameters for the classify_genes step.
+
+    Thresholds default to the values used by the legacy
+    add_essentiality_classification.py script.
+    """
+
+    confident_t_threshold: float = 2.0
+    essentiality_fit_threshold: float = -1.0
+    always_essential_frac: float = 0.8
+    conditional_min_frac: float = 0.1
+
+
+@dataclass
+class MvpFilterConfig:
+    """Parameters for the filter_mvp step."""
+
+    media_prefixes: list[str] = field(default_factory=lambda: ["LB", "RCH2", "M9"])
+    min_cor12: float = 0.2
+    excluded_exp_groups: list[str] = field(default_factory=lambda: ["plant"])
+    excluded_media: list[str] = field(default_factory=lambda: ["Potato Dextrose Broth"])
+
+
+@dataclass
 class CreateFastasConfig:
     """Parameters for the create_fastas step."""
 
@@ -65,23 +97,17 @@ class LabelsConfig:
 
 
 @dataclass
-class MvpFilterConfig:
-    """Parameters for the filter_mvp step."""
-
-    media: list[str] = field(default_factory=lambda: ["LB", "RCH2_defined", "M9"])
-    min_cor12: float = 0.2
-
-
-@dataclass
 class PipelineConfig:
     """Top-level configuration for the entire data pipeline."""
 
     project_root: Path
     data: DataPaths
+    extract_data: ExtractDataConfig
+    classify_genes: ClassifyGenesConfig
+    mvp_filter: MvpFilterConfig
     create_fastas: CreateFastasConfig
     embeddings: EmbeddingsConfig
     labels: LabelsConfig
-    mvp_filter: MvpFilterConfig
 
 
 def _resolve_path(raw: str, project_root: Path) -> Path:
@@ -117,6 +143,28 @@ def load_config(path: Path | str | None = None) -> PipelineConfig:
         mvp_dir=_resolve_path(data_raw.get("mvp_dir", "data/mvp"), root),
     )
 
+    ext_raw = raw.get("extract_data", {})
+    extract_data = ExtractDataConfig(
+        db_filename=ext_raw.get("db_filename", "feba.db"),
+        raw_sequences_filename=ext_raw.get("raw_sequences_filename", "aaseqs"),
+    )
+
+    cg_raw = raw.get("classify_genes", {})
+    classify_genes = ClassifyGenesConfig(
+        confident_t_threshold=float(cg_raw.get("confident_t_threshold", 1.0)),
+        essentiality_fit_threshold=float(cg_raw.get("essentiality_fit_threshold", -1.0)),
+        always_essential_frac=float(cg_raw.get("always_essential_frac", 0.8)),
+        conditional_min_frac=float(cg_raw.get("conditional_min_frac", 0.1)),
+    )
+
+    mvp_raw = raw.get("mvp_filter", {})
+    mvp_filter = MvpFilterConfig(
+        media_prefixes=mvp_raw.get("media_prefixes", ["LB", "RCH2", "M9"]),
+        min_cor12=float(mvp_raw.get("min_cor12", 0.2)),
+        excluded_exp_groups=mvp_raw.get("excluded_exp_groups", ["plant"]),
+        excluded_media=mvp_raw.get("excluded_media", ["Potato Dextrose Broth"]),
+    )
+
     cf_raw = raw.get("create_fastas", {})
     create_fastas = CreateFastasConfig(
         subsets=cf_raw.get("subsets", ["processed", "mvp"]),
@@ -143,17 +191,13 @@ def load_config(path: Path | str | None = None) -> PipelineConfig:
         class_to_int=lab_raw.get("class_to_int", default_class_to_int),
     )
 
-    mvp_raw = raw.get("mvp_filter", {})
-    mvp_filter = MvpFilterConfig(
-        media=mvp_raw.get("media", ["LB", "RCH2_defined", "M9"]),
-        min_cor12=float(mvp_raw.get("min_cor12", 0.2)),
-    )
-
     return PipelineConfig(
         project_root=root,
         data=data_paths,
+        extract_data=extract_data,
+        classify_genes=classify_genes,
+        mvp_filter=mvp_filter,
         create_fastas=create_fastas,
         embeddings=embeddings,
         labels=labels,
-        mvp_filter=mvp_filter,
     )

@@ -314,6 +314,54 @@ def plot_scatter_frac_essential_all_vs_confident(genes: pd.DataFrame, subset: st
     plt.close()
 
 
+def plot_organism_class_summary(genes: pd.DataFrame, subset: str, output_path: Path) -> None:
+    """Two-panel figure: gene counts per organism + normalized class percentages.
+
+    Left panel: horizontal bar chart of total gene count per organism.
+    Right panel: 100% stacked horizontal bar chart of essentiality class fractions.
+    Organisms are sorted by total gene count (descending top-to-bottom).
+    """
+    counts = (
+        genes.groupby(["orgId", "essentiality_class"])
+        .size()
+        .unstack(fill_value=0)
+        .reindex(columns=ESSENTIALITY_CLASSES, fill_value=0)
+    )
+    counts["total"] = counts.sum(axis=1)
+    counts = counts.sort_values("total", ascending=True)
+
+    pct = counts[ESSENTIALITY_CLASSES].div(counts["total"], axis=0) * 100
+
+    class_colors = dict(zip(ESSENTIALITY_CLASSES, sns.color_palette("husl", 4)))
+    organisms = counts.index.tolist()
+    y = np.arange(len(organisms))
+
+    fig, (ax_count, ax_pct) = plt.subplots(1, 2, figsize=(16, max(8, len(organisms) * 0.35)), sharey=True)
+
+    ax_count.barh(y, counts["total"].values, color="steelblue", edgecolor="black", linewidth=0.3)
+    ax_count.set_yticks(y)
+    ax_count.set_yticklabels(organisms, fontsize=8)
+    ax_count.set_xlabel("Total genes")
+    ax_count.set_title("Gene count per organism")
+    for i, v in enumerate(counts["total"].values):
+        ax_count.text(v + counts["total"].max() * 0.01, i, str(v), va="center", fontsize=7)
+
+    left = np.zeros(len(organisms))
+    for cls in ESSENTIALITY_CLASSES:
+        widths = pct[cls].values
+        ax_pct.barh(y, widths, left=left, color=class_colors[cls], label=cls, edgecolor="white", linewidth=0.3)
+        left += widths
+    ax_pct.set_xlim(0, 100)
+    ax_pct.set_xlabel("Percentage of genes")
+    ax_pct.set_title("Essentiality class distribution (%)")
+    ax_pct.legend(title="Class", bbox_to_anchor=(1.02, 1), loc="upper left", fontsize=8)
+
+    fig.suptitle(f"Per-organism gene counts and class distribution ({subset})", fontsize=13, y=1.01)
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.close()
+
+
 def plot_processed_vs_mvp_comparison(
     genes_proc: pd.DataFrame,
     genes_mvp: pd.DataFrame,
@@ -442,6 +490,9 @@ def main() -> int:
         plot_scatter_frac_essential_all_vs_confident(
             genes, subset, out_dir / "15_scatter_frac_essential_all_vs_confident.png"
         )
+        plot_organism_class_summary(
+            genes, subset, out_dir / "16_organism_class_summary.png"
+        )
         print(f"Wrote {len(list(out_dir.glob('*.png')))} figures to {out_dir}")
 
     if args.subset == "all":
@@ -455,7 +506,7 @@ def main() -> int:
         fitness_mvp = load_fitness("mvp")
         plot_processed_vs_mvp_comparison(
             genes_proc, genes_mvp, exps_proc, exps_mvp, fitness_proc, fitness_mvp,
-            comp_dir / "16_processed_vs_mvp_comparison.png",
+            comp_dir / "17_processed_vs_mvp_comparison.png",
         )
         print(f"Wrote comparison figure to {comp_dir}")
 

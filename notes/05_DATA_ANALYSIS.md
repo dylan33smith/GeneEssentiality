@@ -200,7 +200,7 @@ Same format as Stage I; first three rows of each table (same genes/experiments a
 
 The pre-built **genes.parquet** tables (processed and mvp) already contain `n_confident_experiments`, `frac_essential_confident`, and `essentiality_class`; they were produced by the same logic (e.g. via an upstream script or `aggregate_fitness_to_genes` plus merge).
 
-**Embeddings:** Per-organism .pt files are produced by `scripts/generate_proteomelm_embeddings.py` (FASTA → ESM-C 600M → ProteomeLM transformer → .pt). Each .pt contains `embeddings` (tensor shape `[N, D]`) and `group_labels` (list of N strings `orgId:locusId`). Embeddings are **proteome-contextualized**: each gene's embedding reflects its sequence (via ESM-C) plus its relationship to the rest of that organism's proteome (via ProteomeLM). See `notes/07_PROTEOMELM_EMBEDDINGS_RESEARCH.md`. **Embeddings are not yet integrated into the pipeline:** no code under `src/` loads these files or joins them to gene labels.
+**Embeddings:** Per-organism .pt files are produced by the `generate_embeddings` pipeline step (`src/pipeline/generate_embeddings.py`), run via `scripts/run_pipeline.py` (FASTA → ESM-C 600M → ProteomeLM transformer → .pt). Each .pt contains `embeddings` (tensor shape `[N, D]`) and `group_labels` (list of N strings `orgId:locusId`). Embeddings are **proteome-contextualized**: each gene's embedding reflects its sequence (via ESM-C) plus its relationship to the rest of that organism's proteome (via ProteomeLM). See `notes/07_PROTEOMELM_EMBEDDINGS_RESEARCH.md`. **Embeddings are not yet integrated into the pipeline:** no code under `src/` loads these files or joins them to gene labels.
 
 ### Structure
 
@@ -235,7 +235,7 @@ A simple MLP will take the ProteomeLM embedding of a gene and predict essentiali
 ### Current vs intended state
 
 - **Implemented:** Gene-level labels in `genes.parquet` (processed and mvp); load via `load_genes(subset)`. Logic in `src/fitness.py` for computing the same from raw fitness.
-- **Not yet implemented:** Loading ProteomeLM .pt file(s) in `src`, joining embeddings to labels, and feeding them into an ML model. Organism FASTAs in `data/mvp/organism_fastas/` (27 files) are the input to `scripts/generate_proteomelm_embeddings.py`; output format is documented in `notes/02_DATA_DICTIONARY.md`.
+- **Not yet implemented:** Loading ProteomeLM .pt file(s) in `src`, joining embeddings to labels, and feeding them into an ML model. Organism FASTAs in `data/mvp/organism_fastas/` (27 files) are the input to the `generate_embeddings` pipeline step; output format is documented in `notes/02_DATA_DICTIONARY.md`.
 
 ---
 

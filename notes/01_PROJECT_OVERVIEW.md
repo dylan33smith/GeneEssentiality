@@ -10,8 +10,8 @@ All data come from the **Fitness Browser** database: a public resource aggregati
 
 ## MVP vs full database
 
-- **MVP (minimum viable product):** A “terrestrial” or “connected” subset chosen to reduce confounding. Inclusion: organisms that use shared media (**LB**, **RCH2_defined**, or **M9**). Quality filter: experiments with replicate correlation **cor12 ≥ 0.2** only. Result: **27 organisms**, **2,164 experiments**, **138,518 genes**, **8,688,562** fitness records. Used for development and training.
-- **Full (processed):** The complete exported database: **48 organisms**, **7,552 experiments**, **221,005 genes**, **27,410,721** fitness records. Used for reference and for building assets (e.g., orthologs) that span all organisms.
+- **MVP (minimum viable product):** A or “connected” subset chosen to include organisms with overlap in conditions. Inclusion: organisms that use shared media (**LB**, **RCH2_defined**, or **M9**). Quality filter: experiments with replicate correlation **cor12 ≥ 0.2** only (replicate correlation measures agreement between identical sample measurements). Results in: **27 organisms**, **2,164 experiments**, **138,518 genes**, **8,688,562** fitness records. Used for development and training.
+- **Processed (full):** The complete exported database: **48 organisms**, **7,552 experiments**, **221,005 genes**, **27,410,721** fitness records. Used for reference and for building assets (e.g., orthologs) that span all organisms.
 
 ## Current implementation status
 
@@ -19,8 +19,8 @@ All data come from the **Fitness Browser** database: a public resource aggregati
 
 - **Data loaders** (`src/data_io`): Path resolution (project root, `data/`, `processed/`, `mvp/`) and loading of Parquet tables (genes, experiments, fitness, organisms) and media Excel (sheet 2). All access via `src` functions; no raw paths in shared code.
 - **Fitness and essentiality** (`src/fitness`): Vectorized aggregation of raw fitness to gene-level statistics, and assignment of **essentiality class** using the 80%/10% rules (confident = |t| ≥ 2, essential in an experiment = fit &lt; −1; gene-level: &gt;80% → always_essential, 10–80% → conditional, &lt;10% → non_essential, no confident exps → no_data).
-- **ProteomeLM embedding script** (`scripts/generate_proteomelm_embeddings.py`): Produces proteome-contextualized embeddings (ESM-C + ProteomeLM) from a single-organism FASTA. **Done:** Embeddings in `data/mvp/ProtLM_embedddings/` (one .pt per organism: `embeddings`, `group_labels`). See `notes/07_PROTEOMELM_EMBEDDINGS_RESEARCH.md`.
-- **Y label script** (`scripts/add_y_labels_to_embeddings.py`): **Done.** Adds `y` (essentiality_class → 0/1/2/-1) to each .pt; output in `data/mvp/ProtLM_embeddings_with_labels/`.
+- **ProteomeLM embedding step** (`src/pipeline/generate_embeddings.py`): Produces proteome-contextualized embeddings (ESM-C + ProteomeLM) from per-organism FASTAs. Run via `scripts/run_pipeline.py`. **Done:** Embeddings in `data/mvp/ProtLM_embedddings/` (one .pt per organism: `embeddings`, `group_labels`). See `notes/07_PROTEOMELM_EMBEDDINGS_RESEARCH.md`.
+- **Y label step** (`src/pipeline/label_embeddings.py`): **Done.** Adds `y` (essentiality_class → 0/1/2/-1) to each .pt; output in `data/mvp/ProtLM_embeddings_with_labels/`. Run via `scripts/run_pipeline.py`.
 
 **Not yet implemented:**
 
