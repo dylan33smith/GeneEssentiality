@@ -4,8 +4,8 @@ data:
   input_dir: data/mvp/ProtLM_embeddings_with_labels/
 
 split:
-  val_organisms: [WCS417, Putida, DdiaME23, Burk376]
   test_organisms: [Koxy, psRCH2, Korea, BFirm]
+  val_organisms: [WCS417, Putida, DdiaME23, Burk376]
   train_organisms:
     - ANA3
     - Cup4G11

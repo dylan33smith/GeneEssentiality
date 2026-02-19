@@ -2,12 +2,20 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+from torch.utils.data import DataLoader
+
+CLASS_NAMES = ["always_essential", "conditional", "non_essential"]
 
 
 def compute_class_weights(labels: torch.Tensor, n_classes: int = 3) -> torch.Tensor:
     """Compute inverse-frequency class weights for imbalanced data.
+    Inverse frequency assigns a weight that is inversely proportional to how often that class appears in the dataset
+    - The goal is to make the signal from the rare class as strong as the signal from the common classes
 
     Formula: weight[c] = n_total / (n_classes * count[c])
     Use with CrossEntropyLoss to upweight rare classes (always_essential, conditional).
@@ -19,10 +27,14 @@ def compute_class_weights(labels: torch.Tensor, n_classes: int = 3) -> torch.Ten
     Returns:
         Tensor of shape (n_classes,) with weight per class.
     """
-    # TODO: use torch.bincount(labels, minlength=n_classes) to get counts
-    # TODO: avoid division by zero (classes with 0 samples)
-    # TODO: compute weight[c] = total / (n_classes * count[c])
-    pass
+    counts = torch.bincount(labels, minlength=n_classes)
+    total_counts = counts.sum()
+    weights = total_counts / (n_classes * (counts + 1))
+    
+    # uncomment to normalize weights
+    # weights = weights / weights.sum()
+    
+    return weights
 
 
 def make_loss_fn(labels: torch.Tensor, n_classes: int = 3, device: torch.device | None = None) -> nn.CrossEntropyLoss:
@@ -36,7 +48,132 @@ def make_loss_fn(labels: torch.Tensor, n_classes: int = 3, device: torch.device 
     Returns:
         Configured CrossEntropyLoss.
     """
-    # TODO: call compute_class_weights(labels, n_classes)
-    # TODO: move weights to device if provided
-    # TODO: return nn.CrossEntropyLoss(weight=weights)
-    pass
+    weights = compute_class_weights(labels, n_classes)
+    if device is not None:
+        weights = weights.to(device)
+    return nn.CrossEntropyLoss(weight=weights)
+
+
+def train_epoch(
+    model: nn.Module,
+    dataloader: DataLoader,
+    loss_fn: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    device: torch.device,
+) -> float:
+    """Run one training epoch. Returns mean loss over the epoch."""
+    model.train() #dropouts active
+    total_loss = 0.0
+    n_batches = 0
+    for embeddings, labels in dataloader:
+        embeddings = embeddings.to(device)
+        labels = labels.to(device)
+        optimizer.zero_grad() # clear gradients from previous batch
+        outputs = model(embeddings) # forward pass
+        loss = loss_fn(outputs, labels) 
+        loss.backward() # compute gradients
+        optimizer.step() # update weights
+        total_loss += loss.item()
+        n_batches += 1
+    
+    # return mean loss over the epoch
+    return total_loss / n_batches if n_batches > 0 else 0.0
+    
+
+
+def eval_epoch(
+    model: nn.Module,
+    dataloader: DataLoader,
+    loss_fn: nn.Module,
+    device: torch.device,
+) -> float:
+    """Run one evaluation epoch (no gradients). Returns mean loss."""
+    model.eval()
+    total_loss = 0.0
+    n_batches = 0
+    with torch.no_grad():
+        for embeddings, labels in dataloader:
+            embeddings = embeddings.to(device)
+            labels = labels.to(device)
+            outputs = model(embeddings)
+            loss = loss_fn(outputs, labels)
+            total_loss += loss.item()
+            n_batches += 1
+    
+    return total_loss / n_batches if n_batches > 0 else 0.0
+
+
+def collect_predictions(
+    model: nn.Module,
+    dataloader: DataLoader,
+    device: torch.device,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Collect all logits and labels from a dataloader (for metrics).
+
+    Returns:
+        logits: (N, n_classes), labels: (N,)
+    """
+    model.eval()
+    all_logits: list[torch.Tensor] = []
+    all_labels: list[torch.Tensor] = []
+    with torch.no_grad():
+        for embeddings, labels in dataloader:
+            embeddings = embeddings.to(device)
+            logits = model(embeddings)
+            all_logits.append(logits.cpu())
+            all_labels.append(labels)
+    return torch.cat(all_logits, dim=0), torch.cat(all_labels, dim=0)
+
+
+def compute_metrics(
+    logits: torch.Tensor,
+    labels: torch.Tensor,
+    n_classes: int = 3,
+) -> dict[str, Any]:
+    """Compute accuracy, weighted F1, per-class AUROC, per-class AUPRC.
+
+    Args:
+        logits: (N, n_classes) raw model output.
+        labels: (N,) integer class indices.
+        n_classes: Number of classes.
+
+    Returns:
+        Dict with accuracy, weighted_f1, auroc_<class>, auprc_<class>, etc.
+    """
+    from sklearn.metrics import (
+        accuracy_score,
+        average_precision_score,
+        f1_score,
+        roc_auc_score,
+    )
+
+    probs = F.softmax(logits, dim=1).numpy()
+    preds = logits.argmax(dim=1).numpy()
+    y_true = labels.numpy()
+
+    metrics: dict[str, Any] = {}
+    metrics["accuracy"] = float(accuracy_score(y_true, preds))
+    metrics["weighted_f1"] = float(
+        f1_score(y_true, preds, average="weighted", zero_division=0)
+    )
+
+    for c in range(n_classes):
+        y_binary = (y_true == c).astype(int)
+        if y_binary.sum() == 0:
+            metrics[f"auroc_{CLASS_NAMES[c]}"] = None
+            metrics[f"auprc_{CLASS_NAMES[c]}"] = None
+            continue
+        try:
+            metrics[f"auroc_{CLASS_NAMES[c]}"] = float(
+                roc_auc_score(y_binary, probs[:, c])
+            )
+        except ValueError:
+            metrics[f"auroc_{CLASS_NAMES[c]}"] = None
+        try:
+            metrics[f"auprc_{CLASS_NAMES[c]}"] = float(
+                average_precision_score(y_binary, probs[:, c])
+            )
+        except ValueError:
+            metrics[f"auprc_{CLASS_NAMES[c]}"] = None
+
+    return metrics

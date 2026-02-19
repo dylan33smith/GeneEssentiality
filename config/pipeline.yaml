@@ -31,7 +31,7 @@ embeddings:
   proteomelm_model: "Bitbol-Lab/ProteomeLM-L"
   device: "cuda:0"
   input_subdir: organism_fastas
-  output_subdir: ProtLM_embedddings
+  output_subdir: ProtLM_embeddings
 
 labels:
   input_subdir: ProtLM_embeddings
