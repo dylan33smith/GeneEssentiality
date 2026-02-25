@@ -1,0 +1,39 @@
+## Binary classification model configuration
+## Merges always_essential + conditional -> "essential" (0)
+## Keeps non_essential -> "non_essential" (1)
+
+data:
+  input_dir: data/mvp/ProtLM_embeddings_with_labels_layer8/
+
+classification:
+  n_classes: 2
+  class_names: [essential, non_essential]
+  # Remap: always_essential(0) + conditional(1) -> 0, non_essential(2) -> 1
+  label_map:
+    0: 0
+    1: 0
+    2: 1
+
+split:
+  test_organisms: [Koxy, psRCH2, Korea, BFirm]
+  val_organisms: [WCS417, Putida, DdiaME23, Burk376]
+  train_organisms:
+    - ANA3
+    - Cup4G11
+    - Dda3937
+    - Ddia6719
+    - Dyella79
+    - HerbieS
+    - Keio
+    - MR1
+    - PV4
+    - Pedo557
+    - SB2B
+    - Smeli
+    - acidovorax_3H11
+    - azobra
+    - pseudo13_GW456_L13
+    - pseudo1_N1B4
+    - pseudo3_N2E3
+    - pseudo5_N2C3_1
+    - pseudo6_N2E2

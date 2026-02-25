@@ -40,6 +40,4 @@ __all__ = [
     "ESSENTIALITY_FIT_THRESHOLD",
     "aggregate_fitness_to_genes",
     "get_essentiality_class",
-    # pipeline (lazy import via src.pipeline)
-    "pipeline",
 ]

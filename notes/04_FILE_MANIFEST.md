@@ -81,5 +81,5 @@ Purpose of each file or directory in the project (code and key docs). Data asset
 
 ## Exclusions
 
-- **ProteomeLM/** — External tool (immutable); not part of this codebase and not documented here.
+- **../ProteomeLM/** — External tool (immutable); lives as a sibling project at the same level as GeneEssentiality (not inside this repo). Not documented here.
 - **data/** — Data files and directories; documented in `02_DATA_DICTIONARY.md`, not listed as code in this manifest.

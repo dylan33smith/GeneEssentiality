@@ -2,26 +2,25 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Literal
 
 import pandas as pd
 
+from src.paths import project_root
+
 DataSubset = Literal["processed", "mvp"]
 
 
-def _project_root() -> Path:
-    """Resolve project root: parent of src/ or GENEESSENTIALITY_ROOT env."""
-    root = os.environ.get("GENEESSENTIALITY_ROOT")
-    if root:
-        return Path(root).resolve()
-    return Path(__file__).resolve().parents[1]
+def _validate_subset(subset: str) -> None:
+    """Raise ValueError if subset is not 'processed' or 'mvp'."""
+    if subset not in ("processed", "mvp"):
+        raise ValueError(f"subset must be 'processed' or 'mvp', got '{subset}'")
 
 
 def get_data_dir() -> Path:
     """Return the data directory (project_root/data)."""
-    return _project_root() / "data"
+    return project_root() / "data"
 
 
 def get_processed_dir() -> Path:
@@ -48,6 +47,7 @@ def load_genes(subset: DataSubset = "mvp") -> pd.DataFrame:
     Returns:
         Gene DataFrame with one row per gene.
     """
+    _validate_subset(subset)
     base = get_mvp_dir() if subset == "mvp" else get_processed_dir()
     return pd.read_parquet(base / "genes.parquet")
 
@@ -65,6 +65,7 @@ def load_experiments(subset: DataSubset = "mvp") -> pd.DataFrame:
     Returns:
         Experiments DataFrame with one row per experiment.
     """
+    _validate_subset(subset)
     base = get_mvp_dir() if subset == "mvp" else get_processed_dir()
     return pd.read_parquet(base / "experiments.parquet")
 
@@ -80,6 +81,7 @@ def load_fitness(subset: DataSubset = "mvp") -> pd.DataFrame:
     Returns:
         Fitness DataFrame with one row per (gene, experiment).
     """
+    _validate_subset(subset)
     base = get_mvp_dir() if subset == "mvp" else get_processed_dir()
     return pd.read_parquet(base / "fitness.parquet")
 
@@ -95,6 +97,7 @@ def load_organisms(subset: DataSubset = "mvp") -> pd.DataFrame:
     Returns:
         Organisms DataFrame with one row per organism.
     """
+    _validate_subset(subset)
     base = get_mvp_dir() if subset == "mvp" else get_processed_dir()
     return pd.read_parquet(base / "organisms.parquet")
 

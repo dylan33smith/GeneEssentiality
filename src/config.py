@@ -8,18 +8,9 @@ from typing import Any
 
 import yaml
 
+from src.paths import project_root
 
-def _project_root() -> Path:
-    """Resolve project root (parent of src/)."""
-    import os
-
-    root = os.environ.get("GENEESSENTIALITY_ROOT")
-    if root:
-        return Path(root).resolve()
-    return Path(__file__).resolve().parents[1]
-
-
-DEFAULT_CONFIG_PATH = _project_root() / "config" / "pipeline.yaml"
+DEFAULT_CONFIG_PATH = project_root() / "config" / "pipeline.yaml"
 
 
 @dataclass
@@ -78,6 +69,7 @@ class EmbeddingsConfig:
     device: str = "cuda:0"
     input_subdir: str = "organism_fastas"
     output_subdir: str = "ProtLM_embedddings"
+    hidden_layer: int = 8
 
 
 @dataclass
@@ -110,12 +102,34 @@ class PipelineConfig:
     labels: LabelsConfig
 
 
-def _resolve_path(raw: str, project_root: Path) -> Path:
-    """Resolve a path string relative to project_root if not absolute."""
+def _resolve_path(raw: str, root: Path) -> Path:
+    """Resolve a path string relative to root if not absolute."""
     p = Path(raw)
     if p.is_absolute():
         return p
-    return project_root / p
+    return root / p
+
+
+def _build_from_yaml(cls: type, yaml_section: dict[str, Any] | None) -> Any:
+    """Construct a dataclass from a YAML dict section.
+
+    Reads only keys that correspond to dataclass fields. Coerces numeric
+    types (int, float) from YAML values. Missing keys use field defaults.
+    """
+    import dataclasses
+
+    section = yaml_section or {}
+    kwargs: dict[str, Any] = {}
+    for f in dataclasses.fields(cls):
+        if f.name not in section:
+            continue
+        val = section[f.name]
+        if val is not None and f.type == "float":
+            val = float(val)
+        elif val is not None and f.type == "int":
+            val = int(val)
+        kwargs[f.name] = val
+    return cls(**kwargs)
 
 
 def load_config(path: Path | str | None = None) -> PipelineConfig:
@@ -134,7 +148,7 @@ def load_config(path: Path | str | None = None) -> PipelineConfig:
     with open(path) as f:
         raw: dict[str, Any] = yaml.safe_load(f)
 
-    root = _project_root()
+    root = project_root()
 
     data_raw = raw.get("data", {})
     data_paths = DataPaths(
@@ -143,61 +157,13 @@ def load_config(path: Path | str | None = None) -> PipelineConfig:
         mvp_dir=_resolve_path(data_raw.get("mvp_dir", "data/mvp"), root),
     )
 
-    ext_raw = raw.get("extract_data", {})
-    extract_data = ExtractDataConfig(
-        db_filename=ext_raw.get("db_filename", "feba.db"),
-        raw_sequences_filename=ext_raw.get("raw_sequences_filename", "aaseqs"),
-    )
-
-    cg_raw = raw.get("classify_genes", {})
-    classify_genes = ClassifyGenesConfig(
-        confident_t_threshold=float(cg_raw.get("confident_t_threshold", 1.0)),
-        essentiality_fit_threshold=float(cg_raw.get("essentiality_fit_threshold", -1.0)),
-        always_essential_frac=float(cg_raw.get("always_essential_frac", 0.8)),
-        conditional_min_frac=float(cg_raw.get("conditional_min_frac", 0.1)),
-    )
-
-    mvp_raw = raw.get("mvp_filter", {})
-    mvp_filter = MvpFilterConfig(
-        media_prefixes=mvp_raw.get("media_prefixes", ["LB", "RCH2", "M9"]),
-        min_cor12=float(mvp_raw.get("min_cor12", 0.2)),
-        excluded_exp_groups=mvp_raw.get("excluded_exp_groups", ["plant"]),
-        excluded_media=mvp_raw.get("excluded_media", ["Potato Dextrose Broth"]),
-    )
-
-    cf_raw = raw.get("create_fastas", {})
-    create_fastas = CreateFastasConfig(
-        subsets=cf_raw.get("subsets", ["processed", "mvp"]),
-    )
-
-    emb_raw = raw.get("embeddings", {})
-    embeddings = EmbeddingsConfig(
-        proteomelm_model=emb_raw.get("proteomelm_model", "Bitbol-Lab/ProteomeLM-S"),
-        device=emb_raw.get("device", "cuda:0"),
-        input_subdir=emb_raw.get("input_subdir", "organism_fastas"),
-        output_subdir=emb_raw.get("output_subdir", "ProtLM_embedddings"),
-    )
-
-    default_class_to_int = {
-        "always_essential": 0,
-        "conditional": 1,
-        "non_essential": 2,
-        "no_data": -1,
-    }
-    lab_raw = raw.get("labels", {})
-    labels = LabelsConfig(
-        input_subdir=lab_raw.get("input_subdir", "ProtLM_embedddings"),
-        output_subdir=lab_raw.get("output_subdir", "ProtLM_embeddings_with_labels"),
-        class_to_int=lab_raw.get("class_to_int", default_class_to_int),
-    )
-
     return PipelineConfig(
         project_root=root,
         data=data_paths,
-        extract_data=extract_data,
-        classify_genes=classify_genes,
-        mvp_filter=mvp_filter,
-        create_fastas=create_fastas,
-        embeddings=embeddings,
-        labels=labels,
+        extract_data=_build_from_yaml(ExtractDataConfig, raw.get("extract_data")),
+        classify_genes=_build_from_yaml(ClassifyGenesConfig, raw.get("classify_genes")),
+        mvp_filter=_build_from_yaml(MvpFilterConfig, raw.get("mvp_filter")),
+        create_fastas=_build_from_yaml(CreateFastasConfig, raw.get("create_fastas")),
+        embeddings=_build_from_yaml(EmbeddingsConfig, raw.get("embeddings")),
+        labels=_build_from_yaml(LabelsConfig, raw.get("labels")),
     )

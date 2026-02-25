@@ -28,21 +28,23 @@ logger = logging.getLogger(__name__)
 
 def build_gene_lookup(
     class_to_int: dict[str, int],
+    genes: pd.DataFrame | None = None,
 ) -> dict[str, int]:
     """Build a dict mapping 'orgId:locusId' -> integer label.
 
-    Loads genes.parquet (MVP subset) and applies the class_to_int mapping.
-
     Args:
         class_to_int: Mapping from essentiality_class string to integer.
+        genes: Gene DataFrame with orgId, locusId, essentiality_class columns.
+            If None, loads MVP genes from disk.
 
     Returns:
         Dict mapping gene_key -> y integer.
     """
-    genes = load_genes("mvp")
+    if genes is None:
+        genes = load_genes("mvp")
+    genes = genes.copy()
     genes["gene_key"] = genes["orgId"].astype(str) + ":" + genes["locusId"].astype(str)
-    mapped = genes["essentiality_class"].map(class_to_int)
-    genes["y"] = mapped
+    genes["y"] = genes["essentiality_class"].map(class_to_int)
     return genes.set_index("gene_key")["y"].to_dict()
 
 

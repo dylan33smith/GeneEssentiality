@@ -32,10 +32,15 @@ embeddings:
   device: "cuda:0"
   input_subdir: organism_fastas
   output_subdir: ProtLM_embeddings
+  # Hidden layer to extract (0=embedding, 1..N=transformer layers). Use -1 for last layer.
+  hidden_layer: 8
 
 labels:
-  input_subdir: ProtLM_embeddings
-  output_subdir: ProtLM_embeddings_with_labels
+  # When using hidden_layer in embeddings, point these to the layer-specific folders:
+  #   input_subdir: ProtLM_embeddings_layer8
+  #   output_subdir: ProtLM_embeddings_with_labels_layer8
+  input_subdir: ProtLM_embeddings_layer8
+  output_subdir: ProtLM_embeddings_with_labels_layer8
   class_to_int:
     always_essential: 0
     conditional: 1

@@ -1,7 +1,8 @@
 ## Classification model configuration
 
 data:
-  input_dir: data/mvp/ProtLM_embeddings_with_labels/
+  # Use ProtLM_embeddings_with_labels_layer8 for layer-specific embeddings
+  input_dir: data/mvp/ProtLM_embeddings_with_labels_layer8/
 
 split:
   test_organisms: [Koxy, psRCH2, Korea, BFirm]

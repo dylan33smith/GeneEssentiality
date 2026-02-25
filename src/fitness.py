@@ -50,84 +50,97 @@ def get_essentiality_class(
         frac = np.atleast_1d(frac)
         n = np.atleast_1d(n)
 
-    out = np.where(n == 0, "no_data", np.where(
-        frac > ALWAYS_ESSENTIAL_FRAC, "always_essential",
-        np.where(
-            frac >= CONDITIONAL_ESSENTIAL_FRAC_MIN, "conditional",
-            "non_essential",
-        ),
-    ))
+    out = np.select(
+        [n == 0, frac > ALWAYS_ESSENTIAL_FRAC, frac >= CONDITIONAL_ESSENTIAL_FRAC_MIN],
+        ["no_data", "always_essential", "conditional"],
+        default="non_essential",
+    )
     if scalar:
         return str(out[0])
     return out
 
 
-def aggregate_fitness_to_genes(fitness: pd.DataFrame) -> pd.DataFrame:
+def aggregate_fitness_to_genes(
+    fitness: pd.DataFrame,
+    confident_t_threshold: float = CONFIDENT_T_THRESHOLD,
+    essentiality_fit_threshold: float = ESSENTIALITY_FIT_THRESHOLD,
+) -> pd.DataFrame:
     """Compute gene-level stats and essentiality_class from raw fitness table.
 
-    Uses vectorized groupby/agg. No row-wise loops.
-    Thresholds: confident = |t| >= 2, essential = fit < -1;
-    classes: >80% always_essential, 10-80% conditional, <10% non_essential,
-    no confident exps = no_data.
+    Uses vectorized groupby/agg (two passes). Thresholds are configurable
+    and default to the module-level constants.
 
     Args:
         fitness: DataFrame with columns orgId, locusId, expName, fit, t.
+        confident_t_threshold: |t| threshold for confident measurements.
+        essentiality_fit_threshold: Fitness threshold for essential calls.
 
     Returns:
         DataFrame with one row per (orgId, locusId) and columns:
         n_total_experiments, n_confident_experiments, frac_not_confident,
         mean_fit_confident, frac_essential_all, frac_essential_confident,
-        essentiality_class. Other gene metadata (scaffoldId, begin, end, etc.)
-        must be merged from the genes table if needed.
+        essentiality_class.
     """
     required = {"orgId", "locusId", "expName", "fit", "t"}
     if not required.issubset(fitness.columns):
         raise ValueError(f"fitness must have columns {required}")
 
-    t_abs = fitness["t"].abs()
-    confident_mask = t_abs >= CONFIDENT_T_THRESHOLD
-    essential_mask = fitness["fit"] < ESSENTIALITY_FIT_THRESHOLD
+    if len(fitness) == 0:
+        return pd.DataFrame(
+            columns=[
+                "orgId", "locusId", "n_total_experiments",
+                "n_confident_experiments", "frac_not_confident",
+                "mean_fit_confident", "frac_essential_all",
+                "frac_essential_confident", "essentiality_class",
+            ]
+        )
 
-    idx = fitness.groupby(["orgId", "locusId"]).size().index
-    n_total = fitness.groupby(["orgId", "locusId"]).size().reindex(idx).fillna(0)
-    n_confident = (
-        confident_mask.groupby([fitness["orgId"], fitness["locusId"]]).sum().reindex(idx)
-    ).fillna(0).astype(int)
-    n_total = n_total.astype(int)
-
-    frac_not_confident = 1 - (n_confident / n_total.replace(0, np.nan))
-
-    fit_conf = fitness.loc[confident_mask]
-    mean_fit_confident = (
-        fit_conf.groupby(["orgId", "locusId"])["fit"].mean().reindex(idx)
-    )
-    essential_in_confident = fit_conf["fit"] < ESSENTIALITY_FIT_THRESHOLD
-    n_essential_confident = (
-        essential_in_confident.groupby([fit_conf["orgId"], fit_conf["locusId"]])
-        .sum()
-        .reindex(idx)
-        .fillna(0)
-        .astype(int)
-    )
-    frac_essential_all = (
-        essential_mask.groupby([fitness["orgId"], fitness["locusId"]]).mean().reindex(idx)
-    )
-    frac_essential_confident = n_essential_confident / n_confident.replace(0, np.nan)
-
-    essentiality_class = get_essentiality_class(
-        frac_essential_confident.values, n_confident.values
-    )
-
-    result = pd.DataFrame(
-        {
-            "n_total_experiments": n_total.values,
-            "n_confident_experiments": n_confident.values,
-            "frac_not_confident": frac_not_confident.values,
-            "mean_fit_confident": mean_fit_confident.values,
-            "frac_essential_all": frac_essential_all.values,
-            "frac_essential_confident": frac_essential_confident.values,
-            "essentiality_class": essentiality_class,
-        },
-        index=idx,
+    all_stats = fitness.groupby(["orgId", "locusId"]).agg(
+        n_total_experiments=("fit", "count"),
+        n_essential_all=("fit", lambda x: (x < essentiality_fit_threshold).sum()),
     ).reset_index()
-    return result
+
+    confident = fitness[np.abs(fitness["t"]) >= confident_t_threshold]
+
+    if len(confident) > 0:
+        confident_stats = confident.groupby(["orgId", "locusId"]).agg(
+            n_confident_experiments=("fit", "count"),
+            mean_fit_confident=("fit", "mean"),
+            n_essential_confident=(
+                "fit", lambda x: (x < essentiality_fit_threshold).sum()
+            ),
+        ).reset_index()
+    else:
+        confident_stats = pd.DataFrame(
+            columns=[
+                "orgId", "locusId", "n_confident_experiments",
+                "mean_fit_confident", "n_essential_confident",
+            ]
+        )
+
+    gene_stats = all_stats.merge(
+        confident_stats, on=["orgId", "locusId"], how="left"
+    )
+    gene_stats["n_confident_experiments"] = (
+        gene_stats["n_confident_experiments"].fillna(0).infer_objects(copy=False).astype(int)
+    )
+    gene_stats["n_essential_confident"] = (
+        gene_stats["n_essential_confident"].fillna(0).infer_objects(copy=False).astype(int)
+    )
+    gene_stats["frac_not_confident"] = 1 - (
+        gene_stats["n_confident_experiments"] / gene_stats["n_total_experiments"]
+    )
+    gene_stats["frac_essential_all"] = (
+        gene_stats["n_essential_all"] / gene_stats["n_total_experiments"]
+    )
+    gene_stats["frac_essential_confident"] = np.where(
+        gene_stats["n_confident_experiments"] > 0,
+        gene_stats["n_essential_confident"] / gene_stats["n_confident_experiments"],
+        np.nan,
+    )
+    gene_stats["essentiality_class"] = get_essentiality_class(
+        gene_stats["frac_essential_confident"].values,
+        gene_stats["n_confident_experiments"].values,
+    )
+    gene_stats = gene_stats.drop(columns=["n_essential_all", "n_essential_confident"])
+    return gene_stats

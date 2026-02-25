@@ -19,6 +19,7 @@ from pathlib import Path
 import pandas as pd
 
 from src.config import PipelineConfig
+from src.pipeline.create_fastas import parse_fasta_header
 
 logger = logging.getLogger(__name__)
 
@@ -107,12 +108,7 @@ def filter_mvp_sequences(
         include_seq = False
         for line in fin:
             if line.startswith(">"):
-                header = line.strip().lstrip(">")
-                parts = header.split(":")
-                if len(parts) >= 2:
-                    org_id, locus_id = parts[0], parts[1]
-                else:
-                    org_id, locus_id = None, None
+                org_id, locus_id = parse_fasta_header(line.strip())
                 include_seq = (org_id, locus_id) in mvp_gene_ids
                 if include_seq:
                     included += 1

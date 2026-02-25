@@ -7,9 +7,16 @@ from typing import Any
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from sklearn.metrics import (
+    accuracy_score,
+    average_precision_score,
+    f1_score,
+    roc_auc_score,
+)
 from torch.utils.data import DataLoader
 
-CLASS_NAMES = ["always_essential", "conditional", "non_essential"]
+CLASS_NAMES_3 = ["always_essential", "conditional", "non_essential"]
+CLASS_NAMES_2 = ["essential", "non_essential"]
 
 
 def compute_class_weights(labels: torch.Tensor, n_classes: int = 3) -> torch.Tensor:
@@ -30,10 +37,6 @@ def compute_class_weights(labels: torch.Tensor, n_classes: int = 3) -> torch.Ten
     counts = torch.bincount(labels, minlength=n_classes)
     total_counts = counts.sum()
     weights = total_counts / (n_classes * (counts + 1))
-    
-    # uncomment to normalize weights
-    # weights = weights / weights.sum()
-    
     return weights
 
 
@@ -62,23 +65,20 @@ def train_epoch(
     device: torch.device,
 ) -> float:
     """Run one training epoch. Returns mean loss over the epoch."""
-    model.train() #dropouts active
+    model.train()
     total_loss = 0.0
     n_batches = 0
     for embeddings, labels in dataloader:
         embeddings = embeddings.to(device)
         labels = labels.to(device)
-        optimizer.zero_grad() # clear gradients from previous batch
-        outputs = model(embeddings) # forward pass
-        loss = loss_fn(outputs, labels) 
-        loss.backward() # compute gradients
-        optimizer.step() # update weights
+        optimizer.zero_grad()
+        outputs = model(embeddings)
+        loss = loss_fn(outputs, labels)
+        loss.backward()
+        optimizer.step()
         total_loss += loss.item()
         n_batches += 1
-    
-    # return mean loss over the epoch
     return total_loss / n_batches if n_batches > 0 else 0.0
-    
 
 
 def eval_epoch(
@@ -99,7 +99,6 @@ def eval_epoch(
             loss = loss_fn(outputs, labels)
             total_loss += loss.item()
             n_batches += 1
-    
     return total_loss / n_batches if n_batches > 0 else 0.0
 
 
@@ -125,10 +124,18 @@ def collect_predictions(
     return torch.cat(all_logits, dim=0), torch.cat(all_labels, dim=0)
 
 
+def default_class_names(n_classes: int) -> list[str]:
+    """Return default class name list for 2- or 3-class settings."""
+    if n_classes == 2:
+        return list(CLASS_NAMES_2)
+    return list(CLASS_NAMES_3)
+
+
 def compute_metrics(
     logits: torch.Tensor,
     labels: torch.Tensor,
     n_classes: int = 3,
+    class_names: list[str] | None = None,
 ) -> dict[str, Any]:
     """Compute accuracy, weighted F1, per-class AUROC, per-class AUPRC.
 
@@ -136,16 +143,14 @@ def compute_metrics(
         logits: (N, n_classes) raw model output.
         labels: (N,) integer class indices.
         n_classes: Number of classes.
+        class_names: Human-readable names for each class index.
+            Defaults to 3-class or 2-class essentiality names.
 
     Returns:
         Dict with accuracy, weighted_f1, auroc_<class>, auprc_<class>, etc.
     """
-    from sklearn.metrics import (
-        accuracy_score,
-        average_precision_score,
-        f1_score,
-        roc_auc_score,
-    )
+    if class_names is None:
+        class_names = default_class_names(n_classes)
 
     probs = F.softmax(logits, dim=1).numpy()
     preds = logits.argmax(dim=1).numpy()
@@ -158,22 +163,23 @@ def compute_metrics(
     )
 
     for c in range(n_classes):
+        name = class_names[c]
         y_binary = (y_true == c).astype(int)
         if y_binary.sum() == 0:
-            metrics[f"auroc_{CLASS_NAMES[c]}"] = None
-            metrics[f"auprc_{CLASS_NAMES[c]}"] = None
+            metrics[f"auroc_{name}"] = None
+            metrics[f"auprc_{name}"] = None
             continue
         try:
-            metrics[f"auroc_{CLASS_NAMES[c]}"] = float(
+            metrics[f"auroc_{name}"] = float(
                 roc_auc_score(y_binary, probs[:, c])
             )
         except ValueError:
-            metrics[f"auroc_{CLASS_NAMES[c]}"] = None
+            metrics[f"auroc_{name}"] = None
         try:
-            metrics[f"auprc_{CLASS_NAMES[c]}"] = float(
+            metrics[f"auprc_{name}"] = float(
                 average_precision_score(y_binary, probs[:, c])
             )
         except ValueError:
-            metrics[f"auprc_{CLASS_NAMES[c]}"] = None
+            metrics[f"auprc_{name}"] = None
 
     return metrics
