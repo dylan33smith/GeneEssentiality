@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 """Train essentiality MLP from ProteomeLM embeddings.
 
+Training minimizes cross-entropy. The best checkpoint and early stopping are
+based on the metric you choose (e.g. --early-stop-on auprc). Selecting by
+AUPRC saves the model with the highest validation AUPRC, which often
+generalizes better on that metric than the final epoch.
+
 Usage:
     python scripts/train_model.py
     python scripts/train_model.py --config config/model.yaml --epochs 50 --plot
     python scripts/train_model.py --config config/model_binary.yaml --output-name binary
-    python scripts/train_model.py --early-stopping 15 --dropout 0.3
-    python scripts/train_model.py --scheduler plateau --scheduler-patience 5
+    python scripts/train_model.py --early-stopping 15 --early-stop-on auprc
+    python scripts/train_model.py --scheduler plateau --scheduler-patience 5 --early-stop-on auprc
 """
 
 from __future__ import annotations
@@ -54,8 +59,8 @@ def parse_args() -> argparse.Namespace:
         help="Stop if val metric does not improve for N epochs",
     )
     parser.add_argument(
-        "--early-stop-on", choices=["loss", "auprc_ae"], default="loss",
-        help="Metric for early stopping",
+        "--early-stop-on", choices=["loss", "auprc", "auprc_ae"], default="loss",
+        help="Metric for best checkpoint and early stopping: loss (min) or auprc (max, first class)",
     )
     parser.add_argument("--dropout", type=float, default=0.2)
     parser.add_argument("--weight-decay", type=float, default=1e-4)
@@ -117,14 +122,17 @@ def run_training_loop(
     Returns:
         Tuple of (train_losses, val_losses, val_metrics_history).
     """
+    use_auprc = args.early_stop_on in ("auprc", "auprc_ae")
     scheduler = None
     if args.scheduler == "plateau":
         scheduler = ReduceLROnPlateau(
-            optimizer, mode="min", factor=args.scheduler_factor,
+            optimizer,
+            mode="max" if use_auprc else "min",
+            factor=args.scheduler_factor,
             patience=args.scheduler_patience,
         )
 
-    best_val_metric = float("-inf") if args.early_stop_on == "auprc_ae" else float("inf")
+    best_val_metric = float("-inf") if use_auprc else float("inf")
     epochs_without_improvement = 0
 
     train_losses: list[float] = []
@@ -161,9 +169,12 @@ def run_training_loop(
         val_metrics_history.append(val_metrics)
 
         if scheduler is not None:
-            scheduler.step(val_loss)
+            if use_auprc:
+                scheduler.step(val_metrics.get(auprc_key) or 0.0)
+            else:
+                scheduler.step(val_loss)
 
-        if args.early_stop_on == "auprc_ae":
+        if use_auprc:
             current = val_metrics.get(auprc_key) or 0.0
             improved = current > best_val_metric
         else:
