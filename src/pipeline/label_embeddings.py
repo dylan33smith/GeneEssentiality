@@ -29,19 +29,21 @@ logger = logging.getLogger(__name__)
 def build_gene_lookup(
     class_to_int: dict[str, int],
     genes: pd.DataFrame | None = None,
+    subset: str = "mvp",
 ) -> dict[str, int]:
     """Build a dict mapping 'orgId:locusId' -> integer label.
 
     Args:
         class_to_int: Mapping from essentiality_class string to integer.
         genes: Gene DataFrame with orgId, locusId, essentiality_class columns.
-            If None, loads MVP genes from disk.
+            If None, loads genes from disk for the given subset.
+        subset: Data subset to load from if genes is None: "mvp" or "processed".
 
     Returns:
         Dict mapping gene_key -> y integer.
     """
     if genes is None:
-        genes = load_genes("mvp")
+        genes = load_genes(subset)
     genes = genes.copy()
     genes["gene_key"] = genes["orgId"].astype(str) + ":" + genes["locusId"].astype(str)
     genes["y"] = genes["essentiality_class"].map(class_to_int)
@@ -103,6 +105,14 @@ def label_single_file(
     return n_total, n_labeled
 
 
+def _labels_base_dir(config: PipelineConfig) -> Path:
+    """Resolve data directory for labels from config.labels.subset."""
+    subset = getattr(config.labels, "subset", "mvp")
+    if subset not in ("processed", "mvp"):
+        raise ValueError(f"labels.subset must be 'processed' or 'mvp', got {subset!r}")
+    return config.data.processed_dir if subset == "processed" else config.data.mvp_dir
+
+
 class LabelEmbeddingsStep:
     """Attach essentiality y-labels to ProteomeLM .pt files."""
 
@@ -111,7 +121,8 @@ class LabelEmbeddingsStep:
         return "label_embeddings"
 
     def check_inputs(self, config: PipelineConfig) -> bool:
-        input_dir = config.data.mvp_dir / config.labels.input_subdir
+        base_dir = _labels_base_dir(config)
+        input_dir = base_dir / config.labels.input_subdir
         if not input_dir.is_dir():
             logger.warning("Embedding input directory not found: %s", input_dir)
             return False
@@ -120,24 +131,27 @@ class LabelEmbeddingsStep:
             logger.warning("No .pt files in %s", input_dir)
             return False
 
-        genes_path = config.data.mvp_dir / "genes.parquet"
+        genes_path = base_dir / "genes.parquet"
         if not genes_path.is_file():
             logger.warning("genes.parquet not found: %s", genes_path)
             return False
         return True
 
     def run(self, config: PipelineConfig) -> None:
-        input_dir = config.data.mvp_dir / config.labels.input_subdir
-        output_dir = config.data.mvp_dir / config.labels.output_subdir
+        base_dir = _labels_base_dir(config)
+        input_dir = base_dir / config.labels.input_subdir
+        output_dir = base_dir / config.labels.output_subdir
         output_dir.mkdir(parents=True, exist_ok=True)
 
+        subset = getattr(config.labels, "subset", "mvp")
         class_to_int = config.labels.class_to_int
+        logger.info("Subset:      %s", subset)
         logger.info("Label mapping: %s", class_to_int)
         logger.info("Input dir:  %s", input_dir)
         logger.info("Output dir: %s", output_dir)
 
-        logger.info("Loading genes.parquet (MVP) ...")
-        gene_lookup = build_gene_lookup(class_to_int)
+        logger.info("Loading genes.parquet (%s) ...", subset)
+        gene_lookup = build_gene_lookup(class_to_int, subset=subset)
 
         pt_files = sorted(input_dir.glob("*.pt"))
         if not pt_files:

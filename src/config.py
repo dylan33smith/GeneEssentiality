@@ -70,6 +70,8 @@ class EmbeddingsConfig:
     input_subdir: str = "organism_fastas"
     output_subdir: str = "ProtLM_embedddings"
     hidden_layer: int = 8
+    # Data subset: "mvp" (default) or "processed". FASTAs from data/<subset>/organism_fastas.
+    subset: str = "mvp"
 
 
 @dataclass
@@ -78,6 +80,8 @@ class LabelsConfig:
 
     input_subdir: str = "ProtLM_embedddings"
     output_subdir: str = "ProtLM_embeddings_with_labels"
+    # Data subset: "mvp" (default) or "processed". Must match embeddings.subset.
+    subset: str = "mvp"
     class_to_int: dict[str, int] = field(
         default_factory=lambda: {
             "always_essential": 0,

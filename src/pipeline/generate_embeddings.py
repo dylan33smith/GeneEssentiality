@@ -135,6 +135,14 @@ def encode_single_organism(
     return n
 
 
+def _embeddings_base_dir(config: PipelineConfig) -> Path:
+    """Resolve data directory for embeddings from config.embeddings.subset."""
+    subset = getattr(config.embeddings, "subset", "mvp")
+    if subset not in ("processed", "mvp"):
+        raise ValueError(f"embeddings.subset must be 'processed' or 'mvp', got {subset!r}")
+    return config.data.processed_dir if subset == "processed" else config.data.mvp_dir
+
+
 class GenerateEmbeddingsStep:
     """Generate ProteomeLM embeddings for all organism FASTAs."""
 
@@ -143,7 +151,8 @@ class GenerateEmbeddingsStep:
         return "generate_embeddings"
 
     def check_inputs(self, config: PipelineConfig) -> bool:
-        input_dir = config.data.mvp_dir / config.embeddings.input_subdir
+        base_dir = _embeddings_base_dir(config)
+        input_dir = base_dir / config.embeddings.input_subdir
         if not input_dir.is_dir():
             logger.warning("FASTA input directory not found: %s", input_dir)
             return False
@@ -159,11 +168,12 @@ class GenerateEmbeddingsStep:
 
         _ensure_proteomelm_on_path(config.project_root)
 
-        input_dir = config.data.mvp_dir / config.embeddings.input_subdir
+        base_dir = _embeddings_base_dir(config)
+        input_dir = base_dir / config.embeddings.input_subdir
         hidden_layer = config.embeddings.hidden_layer
         layer_suffix = "last" if hidden_layer < 0 else str(hidden_layer)
         output_subdir_with_layer = f"{config.embeddings.output_subdir}_layer{layer_suffix}"
-        output_dir = config.data.mvp_dir / output_subdir_with_layer
+        output_dir = base_dir / output_subdir_with_layer
         output_dir.mkdir(parents=True, exist_ok=True)
 
         device = _resolve_device(config.embeddings.device)
@@ -173,6 +183,7 @@ class GenerateEmbeddingsStep:
         if not fasta_files:
             raise FileNotFoundError(f"No .fasta files in {input_dir}")
 
+        logger.info("Subset:         %s", getattr(config.embeddings, "subset", "mvp"))
         logger.info("Input dir:      %s", input_dir)
         logger.info("Output dir:     %s", output_dir)
         logger.info("Hidden layer:   %s", layer_suffix)

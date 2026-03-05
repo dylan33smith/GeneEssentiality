@@ -106,11 +106,19 @@ def collect_predictions(
     model: nn.Module,
     dataloader: DataLoader,
     device: torch.device,
-) -> tuple[torch.Tensor, torch.Tensor]:
+    *,
+    n_classes: int | None = None,
+    class_names: list[str] | None = None,
+) -> tuple[torch.Tensor, torch.Tensor] | tuple[torch.Tensor, torch.Tensor, dict[str, Any]]:
     """Collect all logits and labels from a dataloader (for metrics).
 
+If n_classes is provided, also computes metrics (accuracy, F1, per-class AUROC,
+        per-class AUPRC) and returns them as a third element.
+
     Returns:
-        logits: (N, n_classes), labels: (N,)
+        If n_classes is None: (logits, labels). logits (N, n_classes), labels (N,).
+        If n_classes is set: (logits, labels, metrics) with metrics including
+        auroc_<class> and auprc_<class> for each class.
     """
     model.eval()
     all_logits: list[torch.Tensor] = []
@@ -121,7 +129,14 @@ def collect_predictions(
             logits = model(embeddings)
             all_logits.append(logits.cpu())
             all_labels.append(labels)
-    return torch.cat(all_logits, dim=0), torch.cat(all_labels, dim=0)
+    logits = torch.cat(all_logits, dim=0)
+    labels = torch.cat(all_labels, dim=0)
+    if n_classes is not None:
+        metrics = compute_metrics(
+            logits, labels, n_classes=n_classes, class_names=class_names
+        )
+        return logits, labels, metrics
+    return logits, labels
 
 
 def default_class_names(n_classes: int) -> list[str]:

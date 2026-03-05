@@ -34,6 +34,9 @@ embeddings:
   output_subdir: ProtLM_embeddings
   # Hidden layer to extract (0=embedding, 1..N=transformer layers). Use -1 for last layer.
   hidden_layer: 8
+  # subset: "mvp" (default) or "processed". Input FASTAs from data/<subset>/organism_fastas.
+  # To use the full processed dataset (48 organisms), set subset: processed (and in labels below).
+  subset: processed
 
 labels:
   # When using hidden_layer in embeddings, point these to the layer-specific folders:
@@ -41,6 +44,8 @@ labels:
   #   output_subdir: ProtLM_embeddings_with_labels_layer8
   input_subdir: ProtLM_embeddings_layer8
   output_subdir: ProtLM_embeddings_with_labels_layer8
+  # subset: "mvp" (default) or "processed". Must match embeddings.subset.
+  subset: processed
   class_to_int:
     always_essential: 0
     conditional: 1

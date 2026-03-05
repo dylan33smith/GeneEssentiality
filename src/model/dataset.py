@@ -58,6 +58,7 @@ class EssentialityDataset(Dataset):
         organism_ids: Iterable[str],
         exclude_no_data: bool = True,
         label_map: dict[int, int] | None = None,
+        normalize_by_organism: bool = False,
     ) -> None:
         """Build dataset from .pt files for the given organisms.
 
@@ -67,11 +68,14 @@ class EssentialityDataset(Dataset):
             exclude_no_data: If True, filter out samples with y == -1 (no_data).
             label_map: Optional mapping from original label int to new label int.
                 Applied after no_data filtering. Use to merge classes (e.g. binary).
+            normalize_by_organism: If True, normalize each organism's embeddings by
+                that proteome's mean and std (genome-wide normalization) before concat.
         """
         self.embeddings_dir = Path(embeddings_dir)
         self.organism_ids = set(organism_ids)
         self.exclude_no_data = exclude_no_data
         self.label_map = label_map
+        self.normalize_by_organism = normalize_by_organism
 
         self._embeddings: torch.Tensor | None = None
         self._labels: torch.Tensor | None = None
@@ -108,6 +112,12 @@ class EssentialityDataset(Dataset):
                 mask = y >= 0
                 emb = emb[mask]
                 y = y[mask]
+
+            if self.normalize_by_organism and emb.numel() > 0:
+                mean = emb.mean(dim=0)
+                std = emb.std(dim=0)
+                std = torch.where(std > 0, std, torch.ones_like(std))
+                emb = (emb - mean) / std
 
             all_embeddings.append(emb)
             all_labels.append(y)
@@ -150,6 +160,7 @@ class EssentialityDataset(Dataset):
 
 def create_datasets_from_config(
     config_path: Path | str | None = None,
+    normalize_by_organism: bool = False,
 ) -> tuple[EssentialityDataset, EssentialityDataset, EssentialityDataset]:
     """Create train, val, and test datasets from a model YAML config.
 
@@ -159,6 +170,8 @@ def create_datasets_from_config(
 
     Args:
         config_path: Path to model config. Defaults to config/model.yaml.
+        normalize_by_organism: If True, normalize each organism's embeddings by
+            that proteome's mean and std (genome-wide normalization).
 
     Returns:
         Tuple of (train_dataset, val_dataset, test_dataset).
@@ -187,7 +200,11 @@ def create_datasets_from_config(
         else None
     )
 
-    ds_kwargs = dict(exclude_no_data=True, label_map=label_map)
+    ds_kwargs = dict(
+        exclude_no_data=True,
+        label_map=label_map,
+        normalize_by_organism=normalize_by_organism,
+    )
     train_ds = EssentialityDataset(
         embeddings_dir=embeddings_dir, organism_ids=train_orgs, **ds_kwargs,
     )
