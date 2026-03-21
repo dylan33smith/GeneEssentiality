@@ -184,11 +184,29 @@ def _load_and_split_rows(
     return result
 
 
+def load_regression_split_dataframes(subset: str = "processed") -> dict[str, pd.DataFrame]:
+    """Load train/val/test row tables (same rows as :func:`create_regression_dataloaders`).
+
+    Args:
+        subset: ``data/<subset>/`` directory (``processed`` or ``mvp``).
+
+    Returns:
+        Mapping ``train`` / ``val`` / ``test`` to DataFrames with columns including
+        ``gene_key``, ``fit``, and condition index columns.
+    """
+    data_dir = get_data_dir() / subset
+    return _load_and_split_rows(
+        regression_parquet=data_dir / "regression_dataset.parquet",
+        splits_csv=data_dir / "mmseqs_splits.csv",
+    )
+
+
 def create_regression_dataloaders(
     batch_size: int = 2048,
     num_workers: int = 4,
     subset: str = "processed",
     pin_memory: bool = True,
+    split_dfs: dict[str, pd.DataFrame] | None = None,
 ) -> tuple[DataLoader, DataLoader, DataLoader]:
     """Create train, val, test DataLoaders for fitness regression.
 
@@ -199,6 +217,9 @@ def create_regression_dataloaders(
         num_workers: Number of DataLoader worker processes.
         subset: Data subset directory name ("processed" or "mvp").
         pin_memory: Pin memory for GPU transfer.
+        split_dfs: Optional pre-loaded split tables (e.g. from
+            :func:`load_regression_split_dataframes`) to avoid reading the
+            parquet twice when callers also need the DataFrames.
 
     Returns:
         (train_loader, val_loader, test_loader)
@@ -213,10 +234,11 @@ def create_regression_dataloaders(
     vocab_sizes: dict[str, int] = vocab["sizes"]
     logger.info("Vocab sizes: %s, total_onehot_dim: %d", vocab_sizes, sum(vocab_sizes.values()))
 
-    split_dfs = _load_and_split_rows(
-        regression_parquet=data_dir / "regression_dataset.parquet",
-        splits_csv=data_dir / "mmseqs_splits.csv",
-    )
+    if split_dfs is None:
+        split_dfs = _load_and_split_rows(
+            regression_parquet=data_dir / "regression_dataset.parquet",
+            splits_csv=data_dir / "mmseqs_splits.csv",
+        )
 
     loaders: dict[str, DataLoader] = {}
     for split_name in ("train", "val", "test"):

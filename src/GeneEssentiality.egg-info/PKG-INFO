@@ -1,0 +1,84 @@
+Metadata-Version: 2.4
+Name: GeneEssentiality
+Version: 0.1.0
+Summary: Context-aware prediction of bacterial gene essentiality
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: torch>=2.0
+Requires-Dist: pandas>=2.0
+Requires-Dist: pyarrow>=14.0
+Requires-Dist: biopython>=1.80
+Requires-Dist: esm>=3.2.1
+Requires-Dist: tqdm>=4.65
+Requires-Dist: openpyxl>=3.1
+Requires-Dist: matplotlib>=3.7
+Requires-Dist: seaborn>=0.12
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: scikit-learn>=1.2
+Requires-Dist: scipy>=1.10
+Provides-Extra: test
+Requires-Dist: pytest>=7.0; extra == "test"
+Requires-Dist: pytest-cov>=4.0; extra == "test"
+
+PROJECT PROTOCOL: DeepConditional (v2.0)
+Title: Context-Aware Prediction of Bacterial Gene Essentiality
+
+### 1. EXECUTIVE SUMMARY & DATA STRATEGY
+------------------------------------
+Objective: Predict quantitative gene fitness (t-scores) based on protein sequence and environmental conditions.
+
+CRITICAL INSIGHT FROM DATA ANALYSIS:
+The database contains distinct "Ecosystem Silos" where media usage does not overlap (e.g., Marine Broth is never used for E. coli). 
+- Risk: A model trained on all data may rely on "Media Shortcuts" (e.g., predicting phenotypes based solely on the media type rather than the stressor).
+- Strategy: The project is split into a "Connected MVP" (high-overlap data) and a "Universal V2" (full sparse data).
+
+### 2. PHASE I: THE "CONNECTED" MVP
+-------------------------------
+Goal: Prove the "Genotype + Stress = Phenotype" hypothesis in a controlled data environment.
+
+2.1 Data Selection (The "Terrestrial" Subset)
+Instead of using all 48 organisms, the MVP will restrict training to the largest "Connected Component" of the database:
+* Inclusion Criteria:
+  - Organisms using 'LB', 'RCH2_defined', or 'M9' media.
+  - This covers ~24 organisms (Pseudomonas, E. coli, Klebsiella, etc.) and ~60% of total experiments.
+* Justification:
+  - These organisms share media types, forcing the model to look at the GENE differences to explain fitness, not just the media differences.
+
+2.2 Condition Representation (MVP Level)
+* Feature: Hierarchical Multi-Hot Encoding.
+  - Vector A (Media): One-Hot encoding of the 15-20 relevant media types (LB, RCH2, etc.).
+  - Vector B (Stress): One-Hot encoding of the ~100 distinct chemical stressors in this subset.
+  - Input = Concatenate(Vector A, Vector B).
+
+### 3. FUTURE DEVELOPMENT (V2 EXPANSION)
+----------------------------------------------
+Goal: Expand to the full database and "Zero-Shot" chemical prediction.
+
+3.1 Handling the "Silos" (Marine/Anaerobes)
+* Action: Introduce "Phylogenetic Embeddings."
+  - Add a token representing the organism's evolutionary distance (e.g., 16S rRNA embedding).
+  - This helps the model adjust for the fact that Marine bacteria have different baselines than Gut bacteria.
+
+3.2 Chemical "First Principles" (The SMILES Upgrade)
+* Limitation of MVP: It treats "Copper" and "Zinc" as random IDs (0 and 1). It doesn't know they are both metals.
+* Upgrade:
+  - Replace One-Hot Stress vectors with Molecular Graph Embeddings (e.g., ChemBERTa or Mol2Vec).
+  - Why: Enables "Zero-Shot" prediction. The model can predict toxicity for a *new* chemical if it is structurally similar to a known one.
+
+### 6. EXECUTION CHECKLIST (PRIORITIZED)
+------------------------------------
+
+STEP 1: Data Engineering
+[DONE] Terrestrial Subset: MVP data exists in `data/mvp/` (27 organisms, LB/RCH2/M9).
+[DONE] ProteomeLM embeddings: per-organism .pt files in `data/mvp/ProtLM_embedddings/` (embeddings + group_labels).
+[DONE] Y label vectors: `scripts/add_y_labels_to_embeddings.py` adds y to each .pt; output in `data/mvp/ProtLM_embeddings_with_labels/`.
+
+STEP 2: MLP Baseline
+[MVP] **MLP (ProteomeLM embedding → essentiality):** Load embeddings + y from `data/mvp/ProtLM_embeddings_with_labels/`; filter to y ≠ -1 (no_data). Train MLP: embedding → 3-class (always_essential, conditional, non_essential). Class-weighted CrossEntropyLoss. Organism-based split (~19/4/4). Metrics: AUPRC for always_essential, AUPRC for conditional (primary interest), accuracy, weighted F1.
+
+### 7. RISK MANAGEMENT
+------------------
+* Risk: "Library Bias" (Small genes look essential because they get fewer hits).
+  - Mitigation: Ensure 'gene_length' is a scalar input to the final MLP head.
+* Risk: "Media Confounding" (Model learns LB = Fitness X, regardless of gene).
+  - Mitigation: The "Terrestrial Subset" strategy minimizes this by ensuring multiple organisms share the same media.
