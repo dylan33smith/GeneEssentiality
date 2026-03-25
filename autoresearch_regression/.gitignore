@@ -1,4 +1,6 @@
 results.tsv
 run.log
+curves/
+figures/
 __pycache__/
 *.pyc

@@ -8,7 +8,7 @@ For prerequisites, full commands, git/logging, and human-in-the-loop workflows, 
 
 ## Scope
 
-- **Edit only `train.py`** — model, optimizer, loss, training loop, hyperparameters, architecture.
+- **Edit files under `experiments/`** — model, optimizer, loss, training loop, hyperparameters, architecture.
 - **Do not modify `prepare.py`** — it owns data loading and the official **validation RMSE** and **mean within-gene Spearman** definitions.
 - **Do not change** [`src/model/regression_dataset.py`](../src/model/regression_dataset.py) or [`src/model/regression_metrics.py`](../src/model/regression_metrics.py) unless a human explicitly allows it (breaks reproducibility of the harness contract).
 
@@ -18,11 +18,25 @@ For prerequisites, full commands, git/logging, and human-in-the-loop workflows, 
 - **Secondary (maximize):** `mean_within_gene_spearman` — printed on the next line.
 - If `val_rmse` improves (lower), keep the commit; if equal or worse, revert (unless exploring a different trade-off with human approval).
 
-## Running an experiment
+## Running experiments
 
 ```bash
 cd /path/to/GeneEssentiality
-python -m autoresearch_regression.train > autoresearch_regression/run.log 2>&1
+
+# Single experiment
+python -m autoresearch_regression.experiments.exp01_baseline
+
+# All experiments
+python -m autoresearch_regression.run_all
+
+# Selected experiments
+python -m autoresearch_regression.run_all --experiments exp01_baseline,exp06_huber
+
+# Resume default queue from exp05 onward (after changing epochs, etc.)
+python -m autoresearch_regression.run_all --start-from exp05_deep
+
+# With log capture
+python -m autoresearch_regression.run_all > autoresearch_regression/run.log 2>&1
 ```
 
 grep metrics:
@@ -32,18 +46,31 @@ grep "^val_rmse:" autoresearch_regression/run.log
 grep "^mean_within_gene_spearman:" autoresearch_regression/run.log
 ```
 
+## Available experiments
+
+| Name | Idea |
+|------|------|
+| `exp01_baseline` | MSE, 2-hidden MLP (2048→512) |
+| `exp02_wider` | 4096→2048, LayerNorm, 0.4 dropout |
+| `exp03_layernorm_gelu` | LayerNorm + GELU activations |
+| `exp04_batchnorm` | BatchNorm + ReLU |
+| `exp05_deep` | 4-layer MLP (2048→1024→512→256) |
+| `exp06_huber` | Huber loss (delta=0.5) |
+| `exp07_residual` | gene_mean + condition_offset subnetworks |
+| `exp08_ranking_mse` | MSE + listwise within-gene ranking loss |
+| `exp09_pairwise` | MSE + within-gene pairwise margin loss |
+| `exp10_lr_sweep` | LR=8e-4, WD=5e-5, patience=8 |
+
 ## Logging results
 
-Append rows to `results.tsv` (tab-separated, copy from `results.tsv.example`). Suggested columns:
+`run_all.py` automatically appends rows to `results.tsv`. For manual runs, append a row (tab-separated, see `results.tsv.example`).
 
-`commit`, `val_rmse`, `mean_within_gene_spearman`, `memory_gb`, `status`, `description`
-
-- `status`: `keep`, `discard`, or `crash`
+- `status`: `ok` or `crash`
 - Do not commit `results.tsv` to git
 
 ## Budget
 
-Baseline uses **`AUTORESEARCH_EPOCHS`** (default 20). You may change the loop in `train.py` to wall-clock or a different epoch cap; document in `description` when comparing runs.
+Default max epochs is **8** per experiment (`AUTORESEARCH_EPOCHS`). **Early stopping** is on by default (`EARLY_STOP_PATIENCE=3`, `EARLY_STOP_MIN_DELTA=1e-4`); set `EARLY_STOP_PATIENCE=0` to disable. Runs may end before the max epoch count.
 
 ## VRAM
 

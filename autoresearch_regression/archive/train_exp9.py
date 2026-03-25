@@ -1,9 +1,4 @@
-"""Baseline regression training loop — the only file the autoresearch agent edits.
-
-Run from repository root:
-
-    python -m autoresearch_regression.train
-"""
+"""Experiment: Lower LR, higher weight decay, more epochs - stable long training"""
 
 from __future__ import annotations
 
@@ -12,7 +7,6 @@ import os
 import sys
 from pathlib import Path
 
-# Repository root on sys.path for ``src`` and ``autoresearch_regression``
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
@@ -20,6 +14,7 @@ if str(_PROJECT_ROOT) not in sys.path:
 import torch
 import torch.nn as nn
 from torch.optim import AdamW
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from autoresearch_regression.prepare import build_loaders_and_val_frame, evaluate
 
@@ -43,9 +38,10 @@ def _default_mlp(input_dim: int) -> nn.Module:
 
 
 def train() -> None:
-    epochs = int(os.environ.get("AUTORESEARCH_EPOCHS", "20"))
-    lr = float(os.environ.get("LR", "1e-3"))
-    weight_decay = float(os.environ.get("WEIGHT_DECAY", "1e-4"))
+    # Conservative hyperparameters for stable long training
+    epochs = int(os.environ.get("AUTORESEARCH_EPOCHS", "50"))
+    lr = float(os.environ.get("LR", "1e-4"))  # Lower LR
+    weight_decay = float(os.environ.get("WEIGHT_DECAY", "1e-3"))  # Higher weight decay
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     train_loader, val_loader, _test_loader, val_df = build_loaders_and_val_frame()
@@ -55,7 +51,11 @@ def train() -> None:
     model = _default_mlp(input_dim).to(device)
     loss_fn = nn.MSELoss()
     optimizer = AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10)
 
+    best_rmse = float("inf")
+    best_spearman = float("-inf")
+    
     for epoch in range(epochs):
         model.train()
         total_loss = 0.0
@@ -71,14 +71,23 @@ def train() -> None:
             total_loss += loss.item()
             n_batches += 1
         train_loss = total_loss / max(n_batches, 1)
-        logger.info("epoch %d/%d train_mse=%.6f", epoch + 1, epochs, train_loss)
+        
+        metrics = evaluate(model, val_loader, device, val_df)
+        val_rmse = metrics['val_rmse']
+        val_spearman = metrics['mean_within_gene_spearman']
+        
+        logger.info("epoch %d/%d train_mse=%.6f val_rmse=%.6f val_spearman=%.6f lr=%.6f", 
+                   epoch + 1, epochs, train_loss, val_rmse, val_spearman, optimizer.param_groups[0]['lr'])
+        
+        scheduler.step(val_rmse)
+        
+        if val_rmse < best_rmse:
+            best_rmse = val_rmse
+        if val_spearman > best_spearman:
+            best_spearman = val_spearman
 
-    metrics = evaluate(model, val_loader, device, val_df)
-    print(f"val_rmse:          {metrics['val_rmse']:.6f}")
-    print(f"mean_within_gene_spearman: {metrics['mean_within_gene_spearman']:.6f}")
-    print(f"n_genes_used_for_spearman: {metrics['n_genes_used_for_spearman']}")
-    print(f"n_genes_single_row: {metrics['n_genes_single_row']}")
-    print(f"n_genes_nan_rho: {metrics['n_genes_nan_rho']}")
+    logger.info("best_rmse:         %.6f", best_rmse)
+    logger.info("best_spearman:     %.6f", best_spearman)
 
 
 if __name__ == "__main__":
