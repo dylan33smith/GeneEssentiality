@@ -1,0 +1,82 @@
+{
+  "experiment": "exp13_layernorm_gelu",
+  "config": {
+    "data_subset": "mvp",
+    "epochs_max": "20",
+    "batch_size": "2048",
+    "early_stop_patience": "3",
+    "early_stop_min_delta": "1e-4"
+  },
+  "epoch_metrics": [
+    {
+      "epoch": 1,
+      "train_mse": 0.32043822518645915,
+      "val_rmse": 0.7244960900170091,
+      "val_spearman": 0.03795340013216383,
+      "lr": 0.0002
+    },
+    {
+      "epoch": 2,
+      "train_mse": 0.2710087860022603,
+      "val_rmse": 0.7190120498057895,
+      "val_spearman": 0.04503545840780931,
+      "lr": 0.0002
+    },
+    {
+      "epoch": 3,
+      "train_mse": 0.2583003051434219,
+      "val_rmse": 0.721140771831741,
+      "val_spearman": 0.042196682185374076,
+      "lr": 0.0002
+    },
+    {
+      "epoch": 4,
+      "train_mse": 0.24996986367331847,
+      "val_rmse": 0.7259145299792702,
+      "val_spearman": 0.03994283663662489,
+      "lr": 0.0002
+    },
+    {
+      "epoch": 5,
+      "train_mse": 0.2434468948965828,
+      "val_rmse": 0.7175360110750801,
+      "val_spearman": 0.04646868223794812,
+      "lr": 0.0002
+    },
+    {
+      "epoch": 6,
+      "train_mse": 0.23810301642692322,
+      "val_rmse": 0.7148444412160617,
+      "val_spearman": 0.045380226236101565,
+      "lr": 0.0002
+    },
+    {
+      "epoch": 7,
+      "train_mse": 0.23374478712299301,
+      "val_rmse": 0.721883723012396,
+      "val_spearman": 0.04530578457612248,
+      "lr": 0.0002
+    },
+    {
+      "epoch": 8,
+      "train_mse": 0.22949556955574874,
+      "val_rmse": 0.716859577460963,
+      "val_spearman": 0.044308698170784415,
+      "lr": 0.0002
+    },
+    {
+      "epoch": 9,
+      "train_mse": 0.22577643436344927,
+      "val_rmse": 0.7193265896520573,
+      "val_spearman": 0.04654480330117296,
+      "lr": 0.0002
+    }
+  ],
+  "final_metrics": {
+    "val_rmse": 0.7193265896520573,
+    "mean_within_gene_spearman": 0.04654480330117296,
+    "n_genes_used_for_spearman": 11133,
+    "n_genes_single_row": 0,
+    "n_genes_nan_rho": 349
+  }
+}

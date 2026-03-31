@@ -1,0 +1,101 @@
+"""exp31 — Residual model with frozen gene_head for first N epochs.
+
+Tests whether stabilizing the gene-level baseline improves offset learning
+by preventing the two heads from fighting during early training.
+"""
+
+from __future__ import annotations
+
+import logging
+import os
+import sys
+from pathlib import Path
+from typing import Any
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
+import torch
+import torch.nn as nn
+from torch.optim import AdamW
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+
+from autoresearch_regression.early_stop import early_stopper_from_env
+from autoresearch_regression.prepare import (
+    GENE_EMBED_DIM,
+    EpochLog,
+    build_loaders_and_val_frame,
+    evaluate,
+    print_metrics,
+)
+from autoresearch_regression.experiments._shared import ResidualModel
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+logger = logging.getLogger(__name__)
+
+
+def _set_gene_head_frozen(model: ResidualModel, frozen: bool) -> None:
+    for p in model.gene_head.parameters():
+        p.requires_grad = not frozen
+
+
+def train() -> dict[str, Any]:
+    epochs = int(os.environ.get("AUTORESEARCH_EPOCHS", "8"))
+    lr = float(os.environ.get("LR", "5e-4"))
+    wd = float(os.environ.get("WEIGHT_DECAY", "1e-4"))
+    freeze_epochs = int(os.environ.get("FREEZE_EPOCHS", "3"))
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    train_loader, val_loader, _test_loader, val_df = build_loaders_and_val_frame()
+
+    input_dim = int(next(iter(train_loader))[0].shape[1])
+    condition_dim = input_dim - GENE_EMBED_DIM
+    logger.info("input_dim=%d  gene_embed_dim=%d  condition_dim=%d  freeze_epochs=%d",
+                input_dim, GENE_EMBED_DIM, condition_dim, freeze_epochs)
+    model = ResidualModel(GENE_EMBED_DIM, condition_dim).to(device)
+    loss_fn = nn.MSELoss()
+    optimizer = AdamW(model.parameters(), lr=lr, weight_decay=wd)
+    scheduler = ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=5)
+    early_stop = early_stopper_from_env()
+
+    _set_gene_head_frozen(model, True)
+    logger.info("gene_head FROZEN for first %d epochs", freeze_epochs)
+
+    elog = EpochLog("exp31_freeze_genehead")
+    for epoch in range(epochs):
+        if epoch == freeze_epochs:
+            _set_gene_head_frozen(model, False)
+            logger.info("gene_head UNFROZEN at epoch %d", epoch + 1)
+
+        model.train()
+        total_loss, n = 0.0, 0
+        for x, y in train_loader:
+            x, y = x.to(device), y.to(device)
+            optimizer.zero_grad()
+            loss = loss_fn(model(x), y)
+            loss.backward()
+            optimizer.step()
+            total_loss += loss.item(); n += 1
+        train_mse = total_loss / max(n, 1)
+        metrics = evaluate(model, val_loader, device, val_df)
+        cur_lr = optimizer.param_groups[0]["lr"]
+        frozen_str = " [gene_head frozen]" if epoch < freeze_epochs else ""
+        logger.info("epoch %d/%d train_mse=%.6f val_rmse=%.6f val_spearman=%.6f lr=%.6f%s",
+                     epoch + 1, epochs, train_mse,
+                     metrics["val_rmse"], metrics["mean_within_gene_spearman"], cur_lr, frozen_str)
+        elog.record(epoch + 1, train_mse=train_mse, val_rmse=metrics["val_rmse"],
+                    val_spearman=metrics["mean_within_gene_spearman"], lr=cur_lr)
+        scheduler.step(metrics["val_rmse"])
+        if early_stop.step(metrics["val_rmse"]):
+            logger.info("early stop at epoch %d/%d", epoch + 1, epochs)
+            break
+
+    metrics = evaluate(model, val_loader, device, val_df)
+    print_metrics(metrics)
+    elog.save(final_metrics=metrics)
+    return metrics
+
+
+if __name__ == "__main__":
+    train()

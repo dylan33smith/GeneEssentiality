@@ -1,0 +1,75 @@
+{
+  "experiment": "exp18_ranking_mse",
+  "config": {
+    "data_subset": "mvp",
+    "epochs_max": "8",
+    "batch_size": "2048",
+    "early_stop_patience": "3",
+    "early_stop_min_delta": "1e-4"
+  },
+  "epoch_metrics": [
+    {
+      "epoch": 1,
+      "train_mse": 0.3241914151896276,
+      "train_rank": 0.0185394254764361,
+      "val_rmse": 0.7202904130257638,
+      "val_spearman": 0.04299952622239443,
+      "lr": 0.0005
+    },
+    {
+      "epoch": 2,
+      "train_mse": 0.2747344175662695,
+      "train_rank": 0.018326598036858866,
+      "val_rmse": 0.7220548713215497,
+      "val_spearman": 0.04525208373171377,
+      "lr": 0.0005
+    },
+    {
+      "epoch": 3,
+      "train_mse": 0.262275365173193,
+      "train_rank": 0.017709401475964462,
+      "val_rmse": 0.7224745535223327,
+      "val_spearman": 0.05053799297301045,
+      "lr": 0.0005
+    },
+    {
+      "epoch": 4,
+      "train_mse": 0.25446971943560204,
+      "train_rank": 0.017467257606912465,
+      "val_rmse": 0.7071655919856848,
+      "val_spearman": 0.05342811986834617,
+      "lr": 0.0005
+    },
+    {
+      "epoch": 5,
+      "train_mse": 0.2488089448222487,
+      "train_rank": 0.017195852175396723,
+      "val_rmse": 0.7193617160312106,
+      "val_spearman": 0.06128710013114895,
+      "lr": 0.0005
+    },
+    {
+      "epoch": 6,
+      "train_mse": 0.24413692085197689,
+      "train_rank": 0.017183583032239578,
+      "val_rmse": 0.7113490679122513,
+      "val_spearman": 0.05821152738161135,
+      "lr": 0.0005
+    },
+    {
+      "epoch": 7,
+      "train_mse": 0.24020243484877685,
+      "train_rank": 0.017228620375126534,
+      "val_rmse": 0.7156643565251484,
+      "val_spearman": 0.05552491060318041,
+      "lr": 0.0005
+    }
+  ],
+  "final_metrics": {
+    "val_rmse": 0.7156643565251484,
+    "mean_within_gene_spearman": 0.05552491060318041,
+    "n_genes_used_for_spearman": 7845,
+    "n_genes_single_row": 0,
+    "n_genes_nan_rho": 3637
+  }
+}

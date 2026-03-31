@@ -33,16 +33,17 @@ EXPERIMENTS_DIR = Path(__file__).resolve().parent / "experiments"
 RESULTS_TSV = Path(__file__).resolve().parent / "results.tsv"
 
 ALL_EXPERIMENTS = [
-    "exp01_baseline",
-    "exp02_wider",
-    "exp03_layernorm_gelu",
-    "exp04_batchnorm",
-    "exp05_deep",
-    "exp06_huber",
-    "exp07_residual",
-    "exp08_ranking_mse",
-    "exp09_pairwise",
-    "exp10_lr_sweep",
+    "exp21_pairwise_control",
+    "exp22_pairwise_genepacked",
+    "exp23_pairwise_gp_norm",
+    "exp24_listwise_genepacked",
+    "exp25_residual_listwise",
+    "exp26_residual_pairwise",
+    "exp27_residual_dual_rank",
+    "exp28_residual_tuned",
+    "exp29_huber_residual",
+    "exp30_wide_offset",
+    "exp31_freeze_genehead",
 ]
 
 TSV_HEADER = "timestamp\texperiment\tval_rmse\tmean_within_gene_spearman\tn_genes_used\tstatus\tdata_subset\tepochs\tdescription\n"

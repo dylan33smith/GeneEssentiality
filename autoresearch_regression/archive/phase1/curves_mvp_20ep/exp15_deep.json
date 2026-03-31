@@ -1,0 +1,54 @@
+{
+  "experiment": "exp15_deep",
+  "config": {
+    "data_subset": "mvp",
+    "epochs_max": "20",
+    "batch_size": "2048",
+    "early_stop_patience": "3",
+    "early_stop_min_delta": "1e-4"
+  },
+  "epoch_metrics": [
+    {
+      "epoch": 1,
+      "train_mse": 0.3187064631993817,
+      "val_rmse": 0.7345286493756793,
+      "val_spearman": 0.0388814930727936,
+      "lr": 0.0005
+    },
+    {
+      "epoch": 2,
+      "train_mse": 0.27829555441445836,
+      "val_rmse": 0.7150825941220326,
+      "val_spearman": 0.03899634051423572,
+      "lr": 0.0005
+    },
+    {
+      "epoch": 3,
+      "train_mse": 0.26569842240468267,
+      "val_rmse": 0.7225535023813802,
+      "val_spearman": 0.04145957100193666,
+      "lr": 0.0005
+    },
+    {
+      "epoch": 4,
+      "train_mse": 0.2578745772975799,
+      "val_rmse": 0.729112049504968,
+      "val_spearman": 0.0392548750828867,
+      "lr": 0.0005
+    },
+    {
+      "epoch": 5,
+      "train_mse": 0.2525658629801241,
+      "val_rmse": 0.7186300715203155,
+      "val_spearman": 0.03915575986424125,
+      "lr": 0.0005
+    }
+  ],
+  "final_metrics": {
+    "val_rmse": 0.7186300715203155,
+    "mean_within_gene_spearman": 0.03915575986424125,
+    "n_genes_used_for_spearman": 11117,
+    "n_genes_single_row": 0,
+    "n_genes_nan_rho": 365
+  }
+}

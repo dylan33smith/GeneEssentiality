@@ -2,7 +2,8 @@
 """Plot training curves from saved epoch logs.
 
 Reads JSON files from ``curves/`` (written by each experiment's EpochLog)
-and generates comparison figures.
+and generates comparison figures. Processed runs use ``exp01_*.json``–``exp10_*.json``;
+MVP runs use ``exp11_*.json``–``exp20_*.json`` so both can coexist.
 
 Usage (from repo root):
 
@@ -56,6 +57,22 @@ def _extract_series(data: dict[str, Any], key: str) -> tuple[list[int], list[flo
     return epochs, values
 
 
+def _train_series_rmse_comparable(data: dict[str, Any]) -> tuple[list[int], list[float], bool]:
+    """Training curve in the same units as validation RMSE when possible.
+
+    ``train_mse`` is mean squared error on training batches; ``sqrt(mse)`` is
+    training-set RMSE (same units as ``val_rmse``). If only ``train_loss`` is
+    present (e.g. Huber), values are left as-is and ``rmselike`` is False.
+    """
+    epochs, vals = _extract_series(data, "train_mse")
+    if vals:
+        return epochs, [float(np.sqrt(v)) for v in vals], True
+    epochs, vals = _extract_series(data, "train_loss")
+    if vals:
+        return epochs, vals, False
+    return [], [], False
+
+
 def plot_comparison(all_data: dict[str, dict[str, Any]], save_dir: Path | None = None) -> None:
     """Generate multi-experiment comparison plots."""
     if not all_data:
@@ -65,24 +82,36 @@ def plot_comparison(all_data: dict[str, dict[str, Any]], save_dir: Path | None =
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
     fig.suptitle("Experiment Training Curves", fontsize=16, fontweight="bold")
 
-    train_loss_keys = ["train_mse", "train_loss"]
-    colors = plt.cm.tab10(np.linspace(0, 1, max(len(all_data), 10)))
+    n = len(all_data)
+    if n <= 10:
+        cmap = plt.cm.tab10
+    elif n <= 20:
+        cmap = plt.cm.tab20
+    else:
+        cmap = plt.cm.hsv
+    colors = cmap(np.linspace(0, 1, n))
 
-    # --- Panel 1: Train loss ---
+    any_non_rmse_train = any(
+        not _train_series_rmse_comparable(d)[2] for d in all_data.values()
+    )
+
+    # --- Panel 1: Train RMSE = sqrt(MSE), same units as val RMSE ---
     ax = axes[0, 0]
     for i, (name, data) in enumerate(all_data.items()):
-        for k in train_loss_keys:
-            epochs, vals = _extract_series(data, k)
-            if vals:
-                ax.plot(epochs, vals, label=name, color=colors[i], linewidth=1.5)
-                break
+        epochs, vals, rmselike = _train_series_rmse_comparable(data)
+        if vals:
+            ax.plot(epochs, vals, label=name, color=colors[i], linewidth=1.5)
     ax.set_xlabel("Epoch")
-    ax.set_ylabel("Train Loss")
-    ax.set_title("Training Loss")
+    if any_non_rmse_train:
+        ax.set_ylabel("Train error")
+        ax.set_title("Training (√MSE → RMSE, else raw loss)")
+    else:
+        ax.set_ylabel("Train RMSE (√ of mean train MSE)")
+        ax.set_title("Training RMSE")
     ax.legend(fontsize=8, loc="upper right")
     ax.grid(True, alpha=0.3)
 
-    # --- Panel 2: Val RMSE ---
+    # --- Panel 2: Val RMSE (share y with train when both are RMSE-like) ---
     ax = axes[0, 1]
     for i, (name, data) in enumerate(all_data.items()):
         epochs, vals = _extract_series(data, "val_rmse")
@@ -90,9 +119,11 @@ def plot_comparison(all_data: dict[str, dict[str, Any]], save_dir: Path | None =
             ax.plot(epochs, vals, label=name, color=colors[i], linewidth=1.5)
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Validation RMSE")
-    ax.set_title("Validation RMSE (lower is better)")
+    ax.set_title("Validation RMSE")
     ax.legend(fontsize=8, loc="upper right")
     ax.grid(True, alpha=0.3)
+    if not any_non_rmse_train:
+        ax.sharey(axes[0, 0])
 
     # --- Panel 3: Val Spearman ---
     ax = axes[1, 0]
@@ -102,7 +133,7 @@ def plot_comparison(all_data: dict[str, dict[str, Any]], save_dir: Path | None =
             ax.plot(epochs, vals, label=name, color=colors[i], linewidth=1.5)
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Mean Within-Gene Spearman")
-    ax.set_title("Within-Gene Spearman (higher is better)")
+    ax.set_title("Within-Gene Spearman")
     ax.legend(fontsize=8, loc="lower right")
     ax.grid(True, alpha=0.3)
 
@@ -132,14 +163,13 @@ def plot_comparison(all_data: dict[str, dict[str, Any]], save_dir: Path | None =
         fig2, ax2 = plt.subplots(1, 3, figsize=(15, 4))
         fig2.suptitle(name, fontsize=14, fontweight="bold")
 
-        for k in train_loss_keys:
-            epochs, vals = _extract_series(data, k)
-            if vals:
-                ax2[0].plot(epochs, vals, "b-", linewidth=1.5, label=f"train ({k})")
-                break
+        tr_ep, tr_y, tr_rmse_like = _train_series_rmse_comparable(data)
+        if tr_ep:
+            lbl = "train RMSE (√MSE)" if tr_rmse_like else "train loss (not RMSE)"
+            ax2[0].plot(tr_ep, tr_y, "b-", linewidth=1.5, label=lbl)
         ax2[0].set_xlabel("Epoch")
-        ax2[0].set_ylabel("Loss")
-        ax2[0].set_title("Training Loss")
+        ax2[0].set_ylabel("Train RMSE" if tr_rmse_like else "Train loss")
+        ax2[0].set_title("Training (aligned with val when √MSE)")
         ax2[0].legend(fontsize=8)
         ax2[0].grid(True, alpha=0.3)
 
@@ -150,6 +180,8 @@ def plot_comparison(all_data: dict[str, dict[str, Any]], save_dir: Path | None =
         ax2[1].set_ylabel("RMSE")
         ax2[1].set_title("Validation RMSE")
         ax2[1].grid(True, alpha=0.3)
+        if tr_ep and tr_rmse_like and rmse:
+            ax2[1].sharey(ax2[0])
 
         epochs, sp = _extract_series(data, "val_spearman")
         if sp:

@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import logging
 import os
+import random
+from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -16,7 +18,7 @@ import numpy as np
 import pandas as pd
 import torch
 from torch import nn
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, Sampler
 
 from src.model.regression_dataset import (
     FitnessRegressionDataset,
@@ -136,6 +138,123 @@ def build_loaders_with_gene_idx() -> tuple[DataLoader, DataLoader, DataLoader, p
     return train_loader, val_loader, test_loader, val_df
 
 
+# ---------------------------------------------------------------------------
+# Gene-packed batch sampler (for dense within-gene ranking experiments)
+# ---------------------------------------------------------------------------
+
+class GenePackedBatchSampler(Sampler[list[int]]):
+    """Yields batches where each gene contributes many/all of its training rows.
+
+    Instead of randomly sampling *rows*, this sampler randomly samples *genes*
+    and then includes all (or up to ``max_rows_per_gene``) rows for each
+    selected gene in the batch.
+    """
+
+    def __init__(
+        self,
+        gene_int_ids: np.ndarray,
+        genes_per_batch: int = 64,
+        max_rows_per_gene: int = 0,
+        shuffle: bool = True,
+    ) -> None:
+        self.shuffle = shuffle
+        self.genes_per_batch = genes_per_batch
+        self.max_rows_per_gene = max_rows_per_gene
+
+        self._gene_to_rows: dict[int, list[int]] = defaultdict(list)
+        for row_idx, gid in enumerate(gene_int_ids):
+            self._gene_to_rows[int(gid)].append(row_idx)
+        self._genes = list(self._gene_to_rows.keys())
+
+    def __iter__(self):
+        genes = self._genes.copy()
+        if self.shuffle:
+            random.shuffle(genes)
+        for start in range(0, len(genes), self.genes_per_batch):
+            batch_genes = genes[start : start + self.genes_per_batch]
+            indices: list[int] = []
+            for g in batch_genes:
+                rows = self._gene_to_rows[g]
+                if self.max_rows_per_gene > 0 and len(rows) > self.max_rows_per_gene:
+                    indices.extend(random.sample(rows, self.max_rows_per_gene))
+                else:
+                    indices.extend(rows)
+            if self.shuffle:
+                random.shuffle(indices)
+            yield indices
+
+    def __len__(self) -> int:
+        return (len(self._genes) + self.genes_per_batch - 1) // self.genes_per_batch
+
+
+def build_loaders_gene_packed() -> tuple[DataLoader, DataLoader, DataLoader, pd.DataFrame]:
+    """Like ``build_loaders_with_gene_idx`` but uses gene-packed batching for train.
+
+    Env-configurable:
+        ``GENES_PER_BATCH`` (default 64): number of distinct genes per batch.
+        ``MAX_ROWS_PER_GENE`` (default 0 = unlimited): cap rows included per gene.
+
+    Train loader yields ``(x, y, gene_idx)``; val/test loaders are standard ``(x, y)``.
+    """
+    import json
+
+    from src.data_io import get_data_dir
+    from src.model.regression_dataset import _load_and_split_rows, load_embedding_store
+
+    cfg = harness_config()
+    data_dir = get_data_dir() / cfg["subset"]
+
+    emb_store = load_embedding_store(data_dir / "ProtLM_embeddings_layer8")
+    vocab_path = data_dir / "condition_vocab_regression.json"
+    with open(vocab_path) as f:
+        vocab = json.load(f)
+    vocab_sizes: dict[str, int] = vocab["sizes"]
+
+    split_dfs = _load_and_split_rows(
+        regression_parquet=data_dir / "regression_dataset.parquet",
+        splits_csv=data_dir / "mmseqs_splits.csv",
+    )
+
+    logger.info("Building gene_key -> int mapping ...")
+    all_gene_keys = pd.concat([split_dfs[s]["gene_key"] for s in ("train", "val", "test")]).unique()
+    gk_to_int: dict[str, int] = {gk: i for i, gk in enumerate(sorted(all_gene_keys))}
+    logger.info("  %d unique genes", len(gk_to_int))
+
+    logger.info("Constructing train dataset (%d rows) ...", len(split_dfs["train"]))
+    train_ds_inner = FitnessRegressionDataset(split_dfs["train"], emb_store, vocab_sizes)
+    train_gene_ints = split_dfs["train"]["gene_key"].map(gk_to_int).values.astype(np.int64)
+    train_ds = _GeneIdxDataset(train_ds_inner, train_gene_ints)
+    logger.info("  train dataset ready (input_dim=%d)", train_ds.input_dim)
+
+    genes_per_batch = int(os.environ.get("GENES_PER_BATCH", "64"))
+    max_rows_per_gene = int(os.environ.get("MAX_ROWS_PER_GENE", "0"))
+    batch_sampler = GenePackedBatchSampler(
+        train_gene_ints,
+        genes_per_batch=genes_per_batch,
+        max_rows_per_gene=max_rows_per_gene,
+    )
+    logger.info("  GenePackedBatchSampler: %d genes/batch, max_rows/gene=%s, %d batches",
+                genes_per_batch, max_rows_per_gene or "unlimited", len(batch_sampler))
+
+    val_ds = FitnessRegressionDataset(split_dfs["val"], emb_store, vocab_sizes)
+    test_ds = FitnessRegressionDataset(split_dfs["test"], emb_store, vocab_sizes)
+    logger.info("  val/test datasets ready")
+
+    nw = cfg["num_workers"]
+    bs = cfg["batch_size"]
+    train_loader = DataLoader(train_ds, batch_sampler=batch_sampler, num_workers=nw,
+                              pin_memory=True, persistent_workers=nw > 0)
+    val_loader = DataLoader(val_ds, batch_size=bs, shuffle=False, num_workers=nw,
+                            pin_memory=True, persistent_workers=nw > 0)
+    test_loader = DataLoader(test_ds, batch_size=bs, shuffle=False, num_workers=nw,
+                             pin_memory=True, persistent_workers=nw > 0)
+    logger.info("  loaders created: train=%d val=%d test=%d batches",
+                len(train_loader), len(val_loader), len(test_loader))
+
+    val_df = split_dfs["val"].reset_index(drop=True)
+    return train_loader, val_loader, test_loader, val_df
+
+
 @torch.no_grad()
 def evaluate(
     model: nn.Module,
@@ -188,12 +307,33 @@ def print_metrics(metrics: dict[str, Any]) -> None:
 
 CURVES_DIR = Path(__file__).resolve().parent / "curves"
 
+# MVP runs use exp11–exp20 filenames so they do not overwrite processed (exp01–exp10) curve JSONs.
+MVP_CURVE_LOG_NAMES = {
+    "exp01_baseline": "exp11_baseline",
+    "exp02_wider": "exp12_wider",
+    "exp03_layernorm_gelu": "exp13_layernorm_gelu",
+    "exp04_batchnorm": "exp14_batchnorm",
+    "exp05_deep": "exp15_deep",
+    "exp06_huber": "exp16_huber",
+    "exp07_residual": "exp17_residual",
+    "exp08_ranking_mse": "exp18_ranking_mse",
+    "exp09_pairwise": "exp19_pairwise",
+    "exp10_lr_sweep": "exp20_lr_sweep",
+}
+
 
 class EpochLog:
     """Collects per-epoch metrics and saves to JSON for plotting."""
 
     def __init__(self, experiment_name: str) -> None:
-        self.experiment_name = experiment_name
+        env = os.environ.get("EPOCH_LOG_EXPERIMENT_NAME")
+        if env:
+            self.experiment_name = env
+        elif os.environ.get("DATA_SUBSET", "processed") == "mvp":
+            mapped = MVP_CURVE_LOG_NAMES.get(experiment_name)
+            self.experiment_name = mapped if mapped else experiment_name + "_mvp"
+        else:
+            self.experiment_name = experiment_name
         self.rows: list[dict[str, Any]] = []
 
     def record(self, epoch: int, **kwargs: float) -> None:

@@ -1,0 +1,89 @@
+{
+  "experiment": "exp16_huber",
+  "config": {
+    "data_subset": "mvp",
+    "epochs_max": "20",
+    "batch_size": "2048",
+    "early_stop_patience": "3",
+    "early_stop_min_delta": "1e-4"
+  },
+  "epoch_metrics": [
+    {
+      "epoch": 1,
+      "train_loss": 0.08056210190369588,
+      "val_rmse": 0.7337155219664454,
+      "val_spearman": 0.04719680252047629,
+      "lr": 0.001
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.07344553681655672,
+      "val_rmse": 0.7328346991640401,
+      "val_spearman": 0.05569849493767902,
+      "lr": 0.001
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.07117128041426697,
+      "val_rmse": 0.7319920063645721,
+      "val_spearman": 0.052505392801590285,
+      "lr": 0.001
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.06983611359078609,
+      "val_rmse": 0.7400649794986802,
+      "val_spearman": 0.054344170422959276,
+      "lr": 0.001
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.0688392352596794,
+      "val_rmse": 0.729435693071276,
+      "val_spearman": 0.056713802563728016,
+      "lr": 0.001
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.0680902699306496,
+      "val_rmse": 0.7346771742233505,
+      "val_spearman": 0.05670924916445693,
+      "lr": 0.001
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.06737702825790207,
+      "val_rmse": 0.7244897881045941,
+      "val_spearman": 0.05840163227024374,
+      "lr": 0.001
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.066833405887154,
+      "val_rmse": 0.7280026790557229,
+      "val_spearman": 0.05410412907889968,
+      "lr": 0.001
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.06631359433023028,
+      "val_rmse": 0.7264696056912004,
+      "val_spearman": 0.051604571746779015,
+      "lr": 0.001
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.06578705730570984,
+      "val_rmse": 0.7300075471317115,
+      "val_spearman": 0.0565917919202019,
+      "lr": 0.001
+    }
+  ],
+  "final_metrics": {
+    "val_rmse": 0.7300075471317115,
+    "mean_within_gene_spearman": 0.0565917919202019,
+    "n_genes_used_for_spearman": 8773,
+    "n_genes_single_row": 0,
+    "n_genes_nan_rho": 2709
+  }
+}
